@@ -14,7 +14,12 @@ public class Pit extends Role {
         this._lifeState = AgentLifeState.Dead;
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Pit";
+    }
+    
+    public static String literal() {
         return "Pit";
     }
     

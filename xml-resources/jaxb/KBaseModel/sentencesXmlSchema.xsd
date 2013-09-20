@@ -10,20 +10,16 @@ and open the template in the editor.
 
     <xs:element name="KnowledgeBases">
     
-    <xs:complexType>
-        <xs:sequence>
-            <xs:element name="sentence" minOccurs="0" maxOccurs="unbounded" >
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="expression" type="xs:string" minOccurs="1" maxOccurs="1" >
-                        </xs:element>
-                    </xs:sequence>
-                    <xs:attribute name="sentenceId" type="xs:int" />
-                </xs:complexType>
-            </xs:element>
-        </xs:sequence>
-    </xs:complexType>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="sentences" minOccurs="1" maxOccurs="1" type="stringList"/>
+            </xs:sequence>          
+        </xs:complexType>
     
     </xs:element>
+    
+    <xs:simpleType name="stringList">
+        <xs:list itemType="xs:string"/>
+    </xs:simpleType>  
     
 </xs:schema>

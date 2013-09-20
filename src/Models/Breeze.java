@@ -12,9 +12,15 @@ public class Breeze extends Symptom {
     
     public Breeze () {
         this._lifeState = AgentLifeState.Alive;
+        this._role = new Pit();
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Breeze";
+    }
+    
+    public static String literal() {
         return "Breeze";
     }
 }

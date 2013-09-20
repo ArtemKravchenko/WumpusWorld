@@ -14,7 +14,12 @@ public class Wall extends Role {
         this._lifeState = AgentLifeState.Bump;
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Wall";
+    }
+    
+    public static String literal() {
         return "Wall";
     }
     

@@ -4,14 +4,23 @@
  */
 package Models;
 
+import Logic.Helper;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  *
  * @author admin
  */
 public class Role extends WorkSpaceCell {
     
-    public @Override String toString() {
-        return "Role";
+    @Override
+    public List<String> getSentences(int lastRow, int lastCol) {
+        List sentences = new ArrayList<>();
+        
+        sentences.add(this.toString() + ":" + Helper.getStringFromRowAndCol(this._row, this._col));
+        
+        return sentences;
     }
     
 }

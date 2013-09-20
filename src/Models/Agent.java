@@ -14,18 +14,30 @@ public class Agent extends Role {
     private AgentAction _lastAction;
     private AgentMoveState _currentState;
     private Boolean _arrow;
+    private Boolean _isGoldFound;
+    
+    public Agent () {
+        this._isGoldFound = false;
+        this._lifeState = AgentLifeState.Alive;
+        this._col = 1;
+        this._row = 1;
+    }
     
     // Methods
     public void pushTheArrow () {
         this._arrow = false;
-        this._lifeState = AgentLifeState.Alive;
-        this._col = 1;
-        this._row = 1;
-        // TODO something
     }
     
     public Boolean arrowIsStillContaining() {
         return this._arrow;
+    }
+    
+    public Boolean isGoldFound() {
+        return this._isGoldFound;
+    }
+    
+    public void setCurrentState(AgentMoveState state) {
+        this._currentState = state;
     }
     
     public void setLastAction(AgentAction action) {
@@ -54,13 +66,27 @@ public class Agent extends Role {
         } else if (action == AgentAction.Shoot) {
             this._arrow = false;
         } else if (action == AgentAction.MoveForward) {
-            // TODO
+            if (this._currentState == AgentMoveState.FaceDown) {
+                this._row -= 1;
+            } else if (this._currentState == AgentMoveState.FaceLeft) {
+                this._col -= 1;
+            } else if (this._currentState == AgentMoveState.FaceRight) {
+                this._col += 1;
+            } else {
+                this._row += 1;
+            }
         } else {
-            // TODO
+            this._isGoldFound = true;
         }
     }
    
-    public @Override String toString() {
+    @Override
+    public String toString() {
         return "Agent";
     }
+    
+    public static String literal() {
+        return "Agent";
+    }
+    
 }

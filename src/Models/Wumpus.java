@@ -14,8 +14,13 @@ public class Wumpus extends Role {
         this._lifeState = AgentLifeState.Dead;
     }
     
-    public @Override String toString() {
-        return "Wumpus";
+    @Override
+    public String toString() {
+        return "Wall";
+    }
+    
+    public static String literal() {
+        return "Wall";
     }
     
 }

@@ -14,7 +14,12 @@ public class Gold extends Role {
         this._lifeState = AgentLifeState.Alive;
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Gold";
+    }
+    
+    public static String literal() {
         return "Gold";
     }
     

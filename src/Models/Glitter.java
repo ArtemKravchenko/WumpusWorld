@@ -12,9 +12,15 @@ public class Glitter extends Symptom {
     
     public Glitter() {
         this._lifeState = AgentLifeState.Alive;
+        this._role = new Gold();
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Glitter";
+    }
+    
+    public static String literal() {
         return "Glitter";
     }
 }

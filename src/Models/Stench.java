@@ -12,9 +12,15 @@ public class Stench extends Symptom {
     
     public Stench () {
         this._lifeState = AgentLifeState.Alive;
+        this._role = new Wumpus();
     }
     
-    public @Override String toString() {
+    @Override
+    public String toString() {
+        return "Stench";
+    }
+    
+    public static String literal() {
         return "Stench";
     }
     
