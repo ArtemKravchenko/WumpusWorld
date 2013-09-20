@@ -1,0 +1,203 @@
+{\rtf1\ansi\ansicpg1251\cocoartf1187\cocoasubrtf390
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\froman\fcharset0 Times-Roman;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww16600\viewh5840\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+
+\f0\fs24 \cf0 It take percept as input and returns an action.\
+Each time the agent program is called, it does three things:\
+1.) TELLs the knowledge base what it perceives.\
+2.) ASKs the knowledge base what action it should perform.\
+3.) TELLs the knowledge base which action was chosen, and the agent execute the action.\
+ function action KB-Agent (percept) \{\
+	PERSISTENT: KB. a knowledge base t, a counter, initially 0. indicating time\
+	\
+	TELL(KB, Make-Percept-Sentence(percept, t))\
+	action = ASK(KB, Make-Action-Query(t))\
+	TELL(KB, Make-Action-Sentence(action, t))\
+	t++;\
+	return action; \
+\}\
+\
+MODELING CHECKING\
+\
+Example: is !P[1,2] entailed by our KB?\
+For given symbols: B[1,1] ; B[2,1] ; P[1,1] ; P[1,2] ; P[2,1] ; P[2,2] ; P[3,1]  - enumerate every models and check that alfa is true in every model in which KB is true. There is 2^7 = 128 possible models. Only in three models !P[1,2]  is true.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Снимок экрана 2013-09-14 в 19.00.46.png \width13660 \height5880
+}�}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 \
+\
+function BOOL TT_Entails (KB, alfa) \{\
+	INPUTS: 		KB, the knowledge base\
+				a sentence in propositional logic "alfa"\
+				the query, a sentence in propositional logic\
+	\
+	symbols = a list of propositional symbols in KB and "alfa"\
+	return TT_Check-All(KB, "alfa", symbols, \{\})\
+\}\
+function BOOL (KB, "alfa", symbols, model) \{\
+	if (!symbols.count) \{\
+		if (PL-True(KB, model)) \{\
+			return PL-True("alfa", model);\
+		\} else \{\
+			return true || when KB is false, always return true;\
+		\}\
+	\} else \{\
+		P = First(symbols);\
+		rest = Rest(symbols);\
+		return (TT-Check-All(KB,"alfa", rest, model and \{P = true \} ) ) AND (TT-Check-All(KB, "alfa", rest, model and \{ P = false\} ) )\
+	\}\
+\}\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Снимок экрана 2013-09-14 в 19.10.51.png \width13660 \height7040
+}�}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 \
+\
+THEOREM PROVING\
+(Applying rules of inference directly to the sentences in our knowledge base to construct a proof of the desired sentence without consulting models)\
+\
+Deduciton Theorem: for any sentences "alfa" and "beta" , "alfa"|="beta" if and only if the sentence ("alfa" => "beta") is valid.\
+Hence, we can decide if "alfa"|="beta" by checking that ("alfa" => "beta") is try in every model.\
+\
+INFERENCE AND PROOFS\
+\
+Modus Ponens (
+\f1\i\fs30 mode that affirms
+\f0\i0\fs24 )\
+{{\NeXTGraphic Снимок экрана 2013-09-17 в 10.58.33.png \width3180 \height980
+}�}\
+\
+The notation means that, whenever any sentences of the form alfa => beta and alfa are given, tun the sentence beta can be inferred.\
+\
+And-Elimination\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Снимок экрана 2013-09-17 в 11.01.01.png \width1240 \height980
+}�}\
+which says that, from a conjunction, any of the conjuncts can be inferred.\
+\
+Equivalence for biconditional elimination yields the two inference rules:\
+{{\NeXTGraphic Снимок экрана 2013-09-17 в 11.04.15.png \width10180 \height1720
+}�}\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+\cf0 {{\NeXTGraphic Снимок экрана 2013-09-17 в 11.12.26.png \width13460 \height2980
+}�}\
+\
+Proof by resolution\
+\
+The literals A and !A resolves each other from different sentences.\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+\cf0 {{\NeXTGraphic Снимок экрана 2013-09-17 в 11.28.47.png \width5360 \height1100
+}�}\
+\
+Conjunctive normal form\
+\
+Every sentence of propositional logic is logically equivalent to a conjunction of clauses.\
+\
+Procedure to conventing CNF:\
+{{\NeXTGraphic Снимок экрана 2013-09-17 в 11.39.49.png \width9740 \height2220
+}�}\
+{{\NeXTGraphic Снимок экрана 2013-09-17 в 11.40.09.png \width13820 \height5760
+}�}\
+\
+The resolution algorithm\
+\
+function BOOL PL-Resolution (KB, alfa) \{\
+	clauses = the set of clauses in the CNF representation of KB and !alfa;\
+	new = \{\};\
+	loop do \{\
+		for each (pair Ci, Cj in clauses) \{\
+			resolvents = PL-Resolve(Ci, Cj);\
+			if (resolution contains the empty clauses)\
+				return true;\
+			new = new union resolvents;\
+		if (new equal or contains clauses)\
+			return false;\
+		\}\
+		clauses = clauses union new;\
+	\}\
+\}\
+\
+Forward and backward chaining\
+\
+function BOOL PL-FC-Entails (KB, q) \{\
+	count // a table, where count[c] is the number of symbols in c's premise\
+	inferred // a table, where inferred[s] is initially false for all symbols\
+	agenda // a queue of symbols, initially known to be true in KB \
+	while (agenda is not empty) \{\
+		p = POP(agenda)\
+		if (p == q) return true;\
+		if (inferred[p] == false) \{\
+			inferred[p] = true;\
+			foreach (clauses c in KB where p is in c.Premise) \{\
+				decrement\
+			\}\
+		\}\
+	\}\
+\}\
+\
+{{\NeXTGraphic Снимок экрана 2013-09-18 в 10.48.20.png \width17340 \height1780
+}�}\
+A complete backtracking algorithm\
+\
+Davis-Putnam algorithm.\
+\
+function BOOL DPLL-Satisfiable (s) \{\
+	clauses = the set of clauses in the CNF representation of s;\
+	symbols = a list of the proposition symbols in s;\
+	return DPLL(clauses, symbols, \{\});\
+\} \
+function BOOL DPLL (clauses, symbols, model) \{\
+	if (every clause in clauses is true in model) return true;\
+	if (some clause in clauses is false in model) return false;\
+	P, value = FInd-Unit-Clause (symbols, clauses, model);\
+	if (P is not null) return DPLL (clauses, symbols - P, model union \{P = value\});\
+	P, value = Find-Unit-Clauses (clauses, model);\
+	if (P is not null) return DPLL (clauses, symbols - P, model union \{P = value\});\
+	P = First (symbols);\
+	rest = Rest (symbols);\
+	return DPLL(clauses, rest, model union \{P = true\}) or DPLL(clauses, rest, model union \{P = false\});\
+\}\
+\
+\
+Local Search Algorithm\
+\
+function (satisfying model or failure) WalkSAT (clauses, p, max_flip) \{\
+	// p - probability of choosing to do a "random walk" move, typically around 0.5 \
+	// max_flip - number of flips allowed before giving up\
+	model = a random assignment of true or false to the symbols in clauses\
+	\
+	for i =1 to max_flips do \{\
+		if (model satisfies clauses) return model;\
+		clauses =  a randomly selected clause from clause that is false in model\
+		with probability p flip the value in model of a randomly selected symbols from clause;\
+		else flip  whichever symbol in clause maximized the number of satisfied clauses;\
+	\}\
+	\
+	return failure;\
+\}\
+\
+{{\NeXTGraphic Снимок экрана 2013-09-18 в 12.57.01.png \width16840 \height1220
+}�}\
+Logical State Estimation\
+\
+\
+\
+\
+{{\NeXTGraphic Снимок экрана 2013-09-18 в 14.54.40.png \width13080 \height14300
+}�}\
+Making Plans by logical inference\
+\
+{{\NeXTGraphic Снимок экрана 2013-09-18 в 14.56.02.png \width13580 \height4580
+}�}\
+\
+\
+\
+\
+\
+\
+\
+\
+}

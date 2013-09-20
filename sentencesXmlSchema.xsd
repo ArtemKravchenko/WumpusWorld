@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <xs:element name="KnowledgeBases">
+    
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="sentence" minOccurs="0" maxOccurs="unbounded" >
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="expression" type="xs:string" minOccurs="1" maxOccurs="1" >
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="sentenceId" type="xs:int" />
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    
+    </xs:element>
+    
+</xs:schema>
