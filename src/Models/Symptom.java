@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author admin
  */
-public class Symptom extends WorkSpaceCell {
+public class Symptom extends CellProperty {
     
     protected Role _role;
     
@@ -21,50 +21,38 @@ public class Symptom extends WorkSpaceCell {
     }
     
     @Override
-    public List<String> getSentences(int lastRow, int lastCol) {
+    public List<String> getSentences(int row, int col) {
     
         List sentences = new ArrayList<> ();
         
         // Add Literals
         String sentence = "";
         
-        sentence += this.toString() + ":" + Helper.getStringFromRowAndCol(this._row, this._col);
+        sentence += this.toString() + ":" + Helper.getStringFromRowAndCol(row, col);
         sentences.add(sentence);
         
         // Add expression
         sentence = "";
         Boolean needConjuction = false;
         
-        sentence += this.toString() + ":" + Helper.getStringFromRowAndCol(this._row, this._col);
+        sentence += this.toString() + ":" + Helper.getStringFromRowAndCol(row, col);
         sentence += "=>";
         
-        int rightCell = this._row + 1;
-        int upCell = this._col + 1;
-        int leftCell = this._row - 1;
-        int downCell = this._col - 1;
+        int rightCell = row + 1;
+        int upCell = col + 1;
+        int leftCell = row - 1;
+        int downCell = col - 1;
         
-        if (rightCell != lastRow && rightCell < this._sideBound) {
-            sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(rightCell, this._col);
-            needConjuction = true;
-        }
-        if (upCell != lastRow && upCell < this._upBound) {
-            if (needConjuction) {
-                sentence += "(con)";
-            }
-            sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(this._row, upCell);
-        }
-        if (leftCell != lastRow && leftCell > 0) {
-            if (needConjuction) {
-                sentence += "(con)";
-            }
-            sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(leftCell, this._col);
-        }
-        if (downCell != lastCol && downCell > 0) {
-            if (needConjuction) {
-                sentence += "(con)";
-            }
-            sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(this._row, downCell);
-        }
+        sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(row, rightCell);
+
+        sentence += "(con)";
+        sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(upCell, col);
+        
+        sentence += "(con)";
+        sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(row, leftCell);
+       
+        sentence += "(con)";
+        sentence += this._role.toString() + ":" + Helper.getStringFromRowAndCol(downCell, col);
         
         sentences.add(sentence);
         

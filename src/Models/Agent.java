@@ -8,19 +8,18 @@ package Models;
  *
  * @author admin
  */
-public class Agent extends Role {
+public class Agent {
 
     // Variables
     private AgentAction _lastAction;
     private AgentMoveState _currentState;
     private Boolean _arrow;
     private Boolean _isGoldFound;
+    private WorkSpaceCell _currentCell;
     
     public Agent () {
         this._isGoldFound = false;
-        this._lifeState = AgentLifeState.Alive;
-        this._col = 1;
-        this._row = 1;
+        this._currentCell = new WorkSpaceCell();
     }
     
     // Methods
@@ -67,19 +66,39 @@ public class Agent extends Role {
             this._arrow = false;
         } else if (action == AgentAction.MoveForward) {
             if (this._currentState == AgentMoveState.FaceDown) {
-                this._row -= 1;
+                this._currentCell.setRow(this._currentCell.getRow() - 1);
             } else if (this._currentState == AgentMoveState.FaceLeft) {
-                this._col -= 1;
+                this._currentCell.setCol(this._currentCell.getCol() - 1);
             } else if (this._currentState == AgentMoveState.FaceRight) {
-                this._col += 1;
+                this._currentCell.setCol(this._currentCell.getCol() + 1);
             } else {
-                this._row += 1;
+                this._currentCell.setRow(this._currentCell.getRow() + 1);
             }
         } else {
             this._isGoldFound = true;
         }
     }
    
+    public void setRow(int row) {
+        this._currentCell.setRow(row);
+    }
+    
+    public void setCol(int col) {
+        this._currentCell.setCol(col);
+    }
+    
+    public int getRow() {
+        return this._currentCell.getRow();
+    }
+    
+    public int getCol() {
+        return this._currentCell.getCol();
+    }
+    
+    public void printCurrentState() {
+        
+    }
+    
     @Override
     public String toString() {
         return "Agent";

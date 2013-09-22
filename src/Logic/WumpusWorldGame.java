@@ -4,22 +4,26 @@
  */
 package Logic;
 
+import Logic.ActionManagment.IActionManager;
+import Logic.InferenceAlgoritms.AlgorithmsManager;
+import Logic.InferenceAlgoritms.IKBaseSupervisorDelegate;
+import Logic.InferenceAlgoritms.FindNewStateAlgorithm;
 import Models.Agent;
 import Models.AgentAction;
 import Models.AgentLifeState;
 import Models.AgentMoveState;
-import Models.Gold;
+import Models.CellProperty;
 import Models.WorkSpaceCell;
-import Models.Wumpus;
 import generated.KnowledgeBases;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author admin
  */
-public class WumpusWorldGame {
+public class WumpusWorldGame implements IKBaseSupervisorDelegate {
     
     // main variables 
     private WorkSpaceCell[][] _workspace;
@@ -27,21 +31,28 @@ public class WumpusWorldGame {
     
     private Agent _agent;
     private FindNewStateAlgorithm _algorithm;
+    private IActionManager _actionManager;
     
     private int _stepCounter;
     
-    private List<String> _avalibleAndNotAttendedCellsForSteps;
+    private AlgorithmsManager _algorithmsManager;
     
-    private List<AgentAction> _actionsArray;
     
     public WumpusWorldGame (WorkSpaceCell[][] workspace, KnowledgeBases knowledgeBase) {
         this._workspace = workspace;
         this._knowledgeBase = knowledgeBase;
         this._stepCounter = 1; 
-        this._avalibleAndNotAttendedCellsForSteps = new ArrayList<>();
         this._agent = new Agent();
-        this._actionsArray = new ArrayList<>();
         this.writeLog("Initialize a game parameters");
+    }
+    
+    // Init algoritm method
+    
+    private void initAlgorithm () throws ClassNotFoundException, InstantiationException, IllegalAccessException{
+        String[] array = new String[] {"ModelCheckingAlgorithm"};
+        this._algorithmsManager = new AlgorithmsManager(array);
+        this._algorithm = this._algorithmsManager.getFirstAlgorithm();
+        this._algorithm.setKBaseSupervisorDelegate((Logic.InferenceAlgoritms.IKBaseSupervisorDelegate) this);
     }
     
     // Playing game method
@@ -52,104 +63,59 @@ public class WumpusWorldGame {
         this._agent.setCol(0);
         this._agent.setCurrentState(AgentMoveState.FaceRight);
         
-        this._avalibleAndNotAttendedCellsForSteps.add(Helper.getStringFromRowAndCol(0,1));
-        this._avalibleAndNotAttendedCellsForSteps.add(Helper.getStringFromRowAndCol(1,0));
         this.printCurrentGameState();
     }
     
-    /*
-     * Algorithm:
-     * 1.) Take percept from neighborhood cells
-     * 2.) Write new sentence in KBase
-     * 3.) Make dission for steps
-     * 4.) If current cell is gold - make grab, anothe - go to step 1.
-     * 
-    */
-    public void simulateGame() {
-        
+    public void simulateGame(){
+        WorkSpaceCell cell;
+        Boolean gameIsContinue = true;
+        while (gameIsContinue) {
+            cell = this._workspace[this._agent.getRow()][this._agent.getCol()];
+            gameIsContinue = this.doNextStep(cell);
+        }
     }
     
     public void tellKBasePercept(WorkSpaceCell cell) {
-        List<String> sentences = cell.getSentences(cell.getRow(), cell.getCol());
-        for (String sentence: sentences) {
-            this._knowledgeBase.addSentence(sentence);
-            this.writeLog("The sentence '" + sentence + "' was added to Knowledge Base");
+        
+        for (CellProperty property: cell.getProperties()) {
+            List<String> sentences = property.getSentences(cell.getRow(), cell.getCol());
+            for (String sentence: sentences) {
+                this.writeToKBase(sentence);
+            }
         }
+        
     }
     
-    public void doNextStep(WorkSpaceCell cell) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public Boolean doNextStep(WorkSpaceCell cell){
         if (!this._agent.isGoldFound()) {
-            if (cell.getLifeState() != AgentLifeState.Dead) {
-                this.tellKBasePercept(cell);
-                if (this._actionsArray.isEmpty()) {
-                    this._algorithm.execute();
-                    this.prepeareActionArrayForAccesCell();  
-                } 
-                AgentAction currentAction = this._actionsArray.get(0);
-                this._actionsArray.remove(0);
-                this._agent.setLastAction(currentAction);
-                
-                this.printCurrentGameState();
-            } else {
-                this.writeLog("You find the " + cell.toString() + "on cell: " + cell.getRow() + "," + cell.getCol() + " therefore you are dead");
+            for (CellProperty property: cell.getProperties()) {
+                if (property.getLifeState() == AgentLifeState.Dead) {
+                    this.writeLog("You find the " + cell.toString() + "on cell: " + cell.getRow() + "," + cell.getCol() + " therefore you are dead");
+                    return false;
+                }
             }
+            // First Step: Take percept from current cell and Tell KBase about percept
+            this.tellKBasePercept(cell);
+            // Generate all possible inference
+            this._algorithm.execute(this._knowledgeBase);
+            // Second Step: Ask KBase, what is the next action
+            this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(cell.getRow(), cell.getCol()));
+            AgentAction nextAction = this._actionManager.getNextAction(this._knowledgeBase);
+            // Third Step: Make the current action
+            this._agent.setLastAction(nextAction);
+                
+            this.printCurrentGameState();
+            
         } else {
             this.writeLog("Gold was founded on cell " + Helper.getStringFromRowAndCol(this._agent.getRow(), this._agent.getCol()) );
+            return false;
         }
+        return true;
     }
     
-    private void prepeareActionArrayForAccesCell() throws ClassNotFoundException, InstantiationException, IllegalAccessException{
-        List<String> sentences = this._knowledgeBase.getSentences();
-        String[] array;
-        String[] sentenceArray;
-        for (String sentence: sentences) {
-            array = sentence.split("<=>");
-            if (array.length == 1) {
-                array = sentence.split("=>");
-                if (array.length == 1) {
-                    array = sentence.split(":");
-                    for (String availableCell : this._avalibleAndNotAttendedCellsForSteps) {
-                        if (array[1].equals(availableCell)) {
-                            sentenceArray = sentence.split(":");
-                            String cellStringType = sentenceArray[0].replace("!", "");
-                            Class c = Class.forName(cellStringType);
-                            WorkSpaceCell cell = (WorkSpaceCell) c.newInstance();
-                            if (cell.toString().equals(Gold.literal())) {
-                                
-                            } else if (cell.toString().equals(Wumpus.literal())) {
-                                
-                            } else {
-                                
-                            }
-                        }
-                    }
-                }
-            } 
-        }
-    }
-    
-    private AgentAction chooseTheActionDependOnCell(WorkSpaceCell cell) {
-        
-        
-        return null;
-    }
-    
-    public int getCurrentAgentRow() {
-        return this._agent.getRow();
-    }
-    
-    public int getCurrentAgentCol () {
-        return this._agent.getCol();
-    }
-    
-    private void writeToKBase(String expression) {
-        this.writeLog("Expression: " + expression + "was be writed to KBase");
-    }
-    
-    private void rewriteCurrentAgentPosition(int row, int col) {
-        this.writeLog("Agent was steped to cell: " + row + "," + col);
-        this._agent.setCol(col);
-        this._agent.setRow(row);
+    private void writeToKBase(String sentence) {
+            this._knowledgeBase.addSentence(sentence);
+            this.writeLog("The sentence '" + sentence + "' was added to Knowledge Base");
     }
     
     public final void writeLog(String log) {
@@ -158,13 +124,18 @@ public class WumpusWorldGame {
     }
     
     public final void printCurrentGameState() {
-        this.writeLog("Agent stay on cell " + Helper.getStringFromRowAndCol(this._agent.getRow(), this._agent.getCol()));
-        
-        this.writeLog("Current cells are available and unsteped");
-        for (String string: this._avalibleAndNotAttendedCellsForSteps) {
-            System.out.println(string);
-        }
-        
+        Helper.printCurrentTime();
+        System.out.println();
+        this._agent.printCurrentState();
         System.out.println("------------------------------------------");
+    }
+
+    @Override
+    public void kBaseDidNotChange() {
+        try {
+            this._algorithm = this._algorithmsManager.changeCurrentAlgorithm();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(WumpusWorldGame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

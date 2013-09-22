@@ -20,6 +20,10 @@ public class Breeze extends Symptom {
         return "Breeze";
     }
     
+    public static int weight() {
+        return 1000;
+    }
+    
     public static String literal() {
         return "Breeze";
     }

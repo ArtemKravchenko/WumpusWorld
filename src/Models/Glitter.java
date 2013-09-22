@@ -20,6 +20,10 @@ public class Glitter extends Symptom {
         return "Glitter";
     }
     
+    public static int weight() {
+        return 100000;
+    }
+    
     public static String literal() {
         return "Glitter";
     }

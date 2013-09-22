@@ -19,6 +19,10 @@ public class Pit extends Role {
         return "Pit";
     }
     
+    public static int weight () {
+        return 1;
+    }
+    
     public static String literal() {
         return "Pit";
     }

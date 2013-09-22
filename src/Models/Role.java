@@ -12,13 +12,13 @@ import java.util.List;
  *
  * @author admin
  */
-public class Role extends WorkSpaceCell {
+public class Role extends CellProperty {
     
     @Override
-    public List<String> getSentences(int lastRow, int lastCol) {
+    public List<String> getSentences(int row, int col) {
         List sentences = new ArrayList<>();
         
-        sentences.add(this.toString() + ":" + Helper.getStringFromRowAndCol(this._row, this._col));
+        sentences.add(this.toString() + ":" + Helper.getStringFromRowAndCol(row, col));
         
         return sentences;
     }

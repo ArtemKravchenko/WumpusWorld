@@ -10,14 +10,20 @@ import Models.Gold;
 import Models.Pit;
 import Models.Stench;
 import Models.Wall;
-import Models.WorkSpaceCell;
+import Models.CellProperty;
 import Models.Wumpus;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  *
  * @author admin
  */
 public class Helper {
+    
+    private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private static Date date = new Date();
     
     public static int[] getRowAndColFromString(String string) {
         int[] rowAndCol = new int[2];
@@ -32,12 +38,16 @@ public class Helper {
         return rowAndCol;
     }
     
+    public static void printCurrentTime(){
+        System.out.println(dateFormat.format(date));
+    }
+    
     public static String getStringFromRowAndCol(int row, int col) {
         return "[" + row + "," + col + "]";
     }
     
-    public static WorkSpaceCell getCellFromString(String string) {
-        WorkSpaceCell cell = null;
+    public static CellProperty getCellFromString(String string) {
+        CellProperty cell = null;
         
         String[] array = string.split(":");
         String cellStringType = array[0].replace("!", "");
@@ -57,7 +67,7 @@ public class Helper {
         } if (cellStringType.equals(Gold.literal())) {
             cell = new Gold();
         } else {
-            cell = new WorkSpaceCell();
+            cell = new CellProperty();
         }
         
         return cell;

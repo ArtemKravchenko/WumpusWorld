@@ -19,6 +19,10 @@ public class Wumpus extends Role {
         return "Wall";
     }
     
+    public static int weight () {
+        return 10;
+    }
+    
     public static String literal() {
         return "Wall";
     }

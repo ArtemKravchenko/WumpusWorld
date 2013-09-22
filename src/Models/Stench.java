@@ -20,6 +20,10 @@ public class Stench extends Symptom {
         return "Stench";
     }
     
+    public static int weight () {
+        return 100;
+    } 
+    
     public static String literal() {
         return "Stench";
     }

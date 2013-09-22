@@ -2,12 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package Logic;
+package Logic.InferenceAlgoritms;
 
 /**
  *
  * @author admin
  */
-public interface FindNewStateAlgorithm {
-    public void execute();
+public interface IKBaseSupervisorDelegate {
+    public void kBaseDidNotChange();
 }
