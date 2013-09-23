@@ -2,7 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package Models;
+package Models.Symptoms;
+
+import Models.Gold;
 
 /**
  *
@@ -11,20 +13,10 @@ package Models;
 public class Glitter extends Symptom {
     
     public Glitter() {
-        this._lifeState = AgentLifeState.Alive;
         this._role = new Gold();
-    }
-    
-    @Override
-    public String toString() {
-        return "Glitter";
     }
     
     public static int weight() {
         return 100000;
-    }
-    
-    public static String literal() {
-        return "Glitter";
     }
 }

@@ -4,44 +4,64 @@
  */
 package Models;
 
+import Logic.ActionManagment.IActionManager;
+import Logic.Helper;
+import Logic.InferenceAlgoritms.AlgorithmsManager;
+import Logic.InferenceAlgoritms.IKBaseSupervisorDelegate;
+import Logic.WumpusWorldGame;
+import Models.Enums.AgentMoveState;
+import Models.Enums.AgentAction;
+import Models.Abstract.AbstractAgent;
+import Models.Abstract.IAgentDelegate;
+import Models.Enums.AgentLifeState;
+import generated.KnowledgeBases;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author admin
  */
-public class Agent {
+public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     // Variables
-    private AgentAction _lastAction;
     private AgentMoveState _currentState;
     private Boolean _arrow;
-    private Boolean _isGoldFound;
-    private WorkSpaceCell _currentCell;
-    
-    public Agent () {
-        this._isGoldFound = false;
-        this._currentCell = new WorkSpaceCell();
+
+    public Agent(KnowledgeBases kBase, IActionManager manager) {
+        this._cell = new BaseWorkSpaceCell();
+        this._currentState = AgentMoveState.FaceRight;
+        this._kBase = kBase;
+        this._actionManager = manager;
+        try {
+            // init algorithm
+            this.initAlgorithm();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(Agent.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
-    
+
+    // Init methods
+    private void initAlgorithm() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        String[] array = new String[]{"ModelCheckingAlgorithm"};
+        this._algoritmManager = new AlgorithmsManager(array);
+        this._inferenceAlgorithm = this._algoritmManager.getFirstAlgorithm();
+        this._inferenceAlgorithm.setKBaseSupervisorDelegate((Logic.InferenceAlgoritms.IKBaseSupervisorDelegate) this);
+    }
+
     // Methods
-    public void pushTheArrow () {
+    public void pushTheArrow() {
         this._arrow = false;
     }
-    
+
     public Boolean arrowIsStillContaining() {
         return this._arrow;
     }
-    
-    public Boolean isGoldFound() {
-        return this._isGoldFound;
-    }
-    
-    public void setCurrentState(AgentMoveState state) {
-        this._currentState = state;
-    }
-    
-    public void setLastAction(AgentAction action) {
-        this._lastAction = action;
-        
+
+    public void makeAction(AgentAction action) {
+
         if (action == AgentAction.TurnLeft) {
             if (this._currentState == AgentMoveState.FaceDown) {
                 this._currentState = AgentMoveState.FaceRight;
@@ -66,46 +86,100 @@ public class Agent {
             this._arrow = false;
         } else if (action == AgentAction.MoveForward) {
             if (this._currentState == AgentMoveState.FaceDown) {
-                this._currentCell.setRow(this._currentCell.getRow() - 1);
+                this._cell.setY(this._cell.getY() - 1);
             } else if (this._currentState == AgentMoveState.FaceLeft) {
-                this._currentCell.setCol(this._currentCell.getCol() - 1);
+                this._cell.setX(this._cell.getX() - 1);
             } else if (this._currentState == AgentMoveState.FaceRight) {
-                this._currentCell.setCol(this._currentCell.getCol() + 1);
+                this._cell.setX(this._cell.getX() + 1);
             } else {
-                this._currentCell.setRow(this._currentCell.getRow() + 1);
+                this._cell.setY(this._cell.getY() + 1);
             }
         } else {
-            this._isGoldFound = true;
+            this._delegate.targetWasReached(this._target);
         }
     }
-   
-    public void setRow(int row) {
-        this._currentCell.setRow(row);
+
+    // Logic
+    public void tellKBasePercept(BaseWorkSpaceCell cell) {
+        for (IBaseCellProperty property : cell.getProperties()) {
+            List<String> sentences = property.getSentences(cell.getY(), cell.getX());
+            for (String sentence : sentences) {
+                this.writeToKBase(sentence);
+            }
+        }
     }
-    
-    public void setCol(int col) {
-        this._currentCell.setCol(col);
-    }
-    
-    public int getRow() {
-        return this._currentCell.getRow();
-    }
-    
-    public int getCol() {
-        return this._currentCell.getCol();
-    }
-    
-    public void printCurrentState() {
-        
-    }
-    
+
     @Override
-    public String toString() {
-        return "Agent";
+    public void doNextStep(int stepCounter) {
+        for (IBaseCellProperty property : ((BaseWorkSpaceCell)this._cell).getProperties()) {
+            if (property.getLifeState() == AgentLifeState.Dead) {
+                this.writeLog("You find the " + this._cell.toString() + "on cell: " + this._cell.getY() + "," + this._cell.getX() + " therefore you are dead " + "(step number: " + stepCounter + ")");
+                this._delegate.agentWasKilled(this);
+                return;
+            }
+        }
+        // First Step: Take percept from current cell and Tell KBase about percept
+        this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
+        // Generate all possible inference
+        this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
+        this._inferenceAlgorithm.execute(this._kBase);
+        // Second Step: Ask KBase, what is the next action
+        this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
+        AgentAction nextAction = this._actionManager.getNextAction(this._kBase);
+        // Third Step: Make the current action
+        this.makeAction(nextAction);
+
+        this.printCurrentState();
+
     }
     
-    public static String literal() {
-        return "Agent";
+    public final void writeLog(String log) {
+        System.out.println(log);
+        // TODO
     }
-    
+
+    @Override
+    public void printCurrentState() {
+    }
+
+    // Overrides methods
+    @Override
+    public void setDelegate(IAgentDelegate delegate) {
+        this._delegate = delegate;
+    }
+
+    @Override
+    public int getX() {
+        return this._cell.getX();
+    }
+
+    @Override
+    public int getY() {
+        return this._cell.getY();
+    }
+
+    @Override
+    public void setX(int x) {
+        this._cell.setX(x);
+    }
+
+    @Override
+    public void setY(int y) {
+        this._cell.setY(y);
+    }
+
+    @Override
+    public void kBaseDidNotChange() {
+        try {
+            this._inferenceAlgorithm = this._algoritmManager.changeCurrentAlgorithm();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(WumpusWorldGame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    @Override
+    protected void writeToKBase(String sentence) {
+        this._kBase.addSentence(sentence);
+        this.writeLog("The sentence '" + sentence + "' was added to Knowledge Base");
+    }
 }

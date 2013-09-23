@@ -4,7 +4,17 @@
  */
 package wumpusworldproject;
 
-import java.util.Set;
+import Logic.ActionManagment.IActionManager;
+import Logic.ActionManagment.SimpleActionManager;
+import Logic.WumpusWorldGame;
+import Models.Agent;
+import Models.BaseWorkSpace;
+import Models.EmptyCellProperty;
+import Models.IBaseCellProperty;
+import Models.Roles.Pit;
+import Models.Roles.Wumpus;
+import generated.KnowledgeBases;
+import java.util.List;
 
 /**
  *
@@ -19,5 +29,50 @@ public class WumpusWorldProject {
 
         Set<Class<? extends Object>> allClasses = reflections.getSubTypesOf(Object.class);
         */
+        
+        IActionManager manager = new SimpleActionManager(); 
+        // Init kBase
+        
+        KnowledgeBases kBase = new KnowledgeBases();
+        IBaseCellProperty cellProperty = new EmptyCellProperty();
+        List<String> sentences = cellProperty.getSentences(0, 0);
+        for (String sentence: sentences) {
+            kBase.addSentence(sentence);
+        }
+        
+        cellProperty = new Pit();
+        sentences = cellProperty.getSentences(0, 1);
+        for (String sentence: sentences) {
+            kBase.addSentence("!" + sentence);
+        }
+        
+        cellProperty = new Wumpus();
+        sentences = cellProperty.getSentences(0, 1);
+        for (String sentence: sentences) {
+            kBase.addSentence("!" + sentence);
+        }
+        
+        cellProperty = new Pit();
+        sentences = cellProperty.getSentences(1, 0);
+        for (String sentence: sentences) {
+            kBase.addSentence("!" + sentence);
+        }
+        
+        cellProperty = new Wumpus();
+        sentences = cellProperty.getSentences(1, 0);
+        for (String sentence: sentences) {
+            kBase.addSentence("!" + sentence);
+        }
+        
+        for (String sentence: kBase.getSentences()) {
+            System.out.println(sentence);
+        }
+        
+        Agent agent = new Agent(kBase, manager);
+        BaseWorkSpace workSpace  = new BaseWorkSpace();
+        
+        WumpusWorldGame game = new WumpusWorldGame(workSpace, agent);
+        game.starteGame();
+        game.simulateGame();
     }
 }

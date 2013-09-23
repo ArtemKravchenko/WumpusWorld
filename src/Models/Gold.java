@@ -4,23 +4,23 @@
  */
 package Models;
 
+import Models.Abstract.ITarget;
+import Models.Roles.Role;
+import Models.Enums.AgentLifeState;
+
 /**
  *
  * @author admin
  */
-public class Gold extends Role {
+public class Gold extends Role implements ITarget {
     
-    public Gold(){
-        this._lifeState = AgentLifeState.Alive;
+    public static int weight(){
+        return 1000000;
     }
     
     @Override
-    public String toString() {
-        return "Gold";
-    }
-    
-    public static String literal() {
-        return "Gold";
+    public AgentLifeState getLifeState() {
+        return AgentLifeState.Alive;
     }
     
 }

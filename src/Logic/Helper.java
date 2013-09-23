@@ -4,14 +4,16 @@
  */
 package Logic;
 
-import Models.Breeze;
-import Models.Glitter;
+import Models.Abstract.AbstractWorkSpaceCell;
+import Models.BaseWorkSpaceCell;
+import Models.Symptoms.Breeze;
+import Models.Symptoms.Glitter;
 import Models.Gold;
-import Models.Pit;
-import Models.Stench;
-import Models.Wall;
-import Models.CellProperty;
-import Models.Wumpus;
+import Models.Roles.Pit;
+import Models.Symptoms.Stench;
+import Models.Roles.Wall;
+import Models.EmptyCellProperty;
+import Models.Roles.Wumpus;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,17 +27,22 @@ public class Helper {
     private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static Date date = new Date();
     
-    public static int[] getRowAndColFromString(String string) {
-        int[] rowAndCol = new int[2];
+    public static BaseWorkSpaceCell getRowAndColFromString(String string) {
+        BaseWorkSpaceCell cell = new BaseWorkSpaceCell();
         
-        String[] array = string.split(",");
+        String[] array = string.split("\\,");
         String row = array[0].replace("[", "");
         String col = array[1].replace("]", "");
         
-        rowAndCol[0] = Integer.parseInt(row);
-        rowAndCol[1] = Integer.parseInt(col);
+        cell.setY(Integer.parseInt(row));
+        cell.setX(Integer.parseInt(col));
         
-        return rowAndCol;
+        return cell;
+    }
+    
+    public static String getEntityNameFromClass(String className) {
+        String[] array = className.split("\\.");
+        return array[array.length - 1];
     }
     
     public static void printCurrentTime(){
@@ -46,30 +53,11 @@ public class Helper {
         return "[" + row + "," + col + "]";
     }
     
-    public static CellProperty getCellFromString(String string) {
-        CellProperty cell = null;
-        
-        String[] array = string.split(":");
-        String cellStringType = array[0].replace("!", "");
-        
-        if (cellStringType.equals(Pit.literal())) {
-            cell = new Pit();
-        } if (cellStringType.equals(Wumpus.literal())) {
-            cell = new Wumpus();
-        } if (cellStringType.equals(Wall.literal())) {
-            cell = new Wall();
-        } if (cellStringType.equals(Breeze.literal())) {
-            cell = new Breeze();
-        } if (cellStringType.equals(Stench.literal())) {
-            cell = new Stench();
-        } if (cellStringType.equals(Glitter.literal())) {
-            cell = new Glitter();
-        } if (cellStringType.equals(Gold.literal())) {
-            cell = new Gold();
-        } else {
-            cell = new CellProperty();
-        }
-        
-        return cell;
-    } 
+    public static String getConjuction() {
+        return "(con)";
+    }
+    
+    public static String getDisjuction() {
+        return "(dis)";
+    }
 }

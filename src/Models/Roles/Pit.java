@@ -2,14 +2,17 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package Models;
+package Models.Roles;
 
 /**
  *
  * @author admin
  */
-public enum AgentLifeState {
-    Alive,
-    Bump,
-    Dead
+public class Pit extends Role {
+    
+    
+    public static int weight () {
+        return 1;
+    }
+    
 }

@@ -4,8 +4,9 @@
  */
 package Logic.ActionManagment;
 
-import Models.AgentAction;
+import Models.Enums.AgentAction;
 import generated.KnowledgeBases;
+import java.util.List;
 
 /**
  *
@@ -15,5 +16,6 @@ public interface IActionManager {
  
     public void addToVisitedCells(String cellCoordinat);
     public AgentAction getNextAction(KnowledgeBases kBase);
+    public List<String> getDesiredCells();
     
 }

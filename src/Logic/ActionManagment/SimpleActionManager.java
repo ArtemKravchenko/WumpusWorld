@@ -4,21 +4,14 @@
  */
 package Logic.ActionManagment;
 
-import Models.AgentAction;
-import Models.CellProperty;
+import Models.Enums.AgentAction;
 import generated.KnowledgeBases;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import Logic.Helper;
-import Models.Breeze;
-import Models.Glitter;
-import Models.Gold;
-import Models.Pit;
-import Models.Stench;
-import Models.WorkSpaceCell;
-import Models.Wumpus;
+import Models.BaseWorkSpaceCell;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,12 +23,14 @@ import java.util.Set;
 public class SimpleActionManager implements IActionManager {
     
     private Queue<AgentAction> _actionQueue;
-    private WorkSpaceCell _targetCell;
+    private BaseWorkSpaceCell _targetCell;
     private List<String> _visitedcCells;
+    private List<String> _desiredCells;
     
     public SimpleActionManager() {
         this._actionQueue = new ArrayDeque<>();
         this._visitedcCells = new ArrayList<>();
+        this._desiredCells = new ArrayList<>();
     }
     
     @Override
@@ -43,8 +38,6 @@ public class SimpleActionManager implements IActionManager {
         this.prepeareActionArrayForAccesCell(kBase);
         return this._actionQueue.poll();
     }
-    
-    private final int kEmptyCellWeight = 10000;
     
     private void prepeareActionArrayForAccesCell(KnowledgeBases kBase) {
         
@@ -70,54 +63,9 @@ public class SimpleActionManager implements IActionManager {
         
         for (String sentence: sentences) {
             if (!sentence.contains("=>")) {
-                array = sentence.split(":");
+                array = sentence.split("\\:");
                 literal = array[0];
-                if (literal.equals(Gold.literal())) {
-                    this.setTargetCell(array[1]);
-                    return;
-                }
                 
-                if (literal.equals(Glitter.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=Glitter.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals("!" + Pit.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=CellProperty.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals("!" + Wumpus.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=CellProperty.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals(Breeze.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=Breeze.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals(Stench.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=Stench.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals(Wumpus.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=Wumpus.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
-                
-                if (literal.equals(Pit.literal())) {
-                    int tmp = emptyCellsMap.get(array[1]);
-                    tmp+=Pit.weight();
-                    emptyCellsMap.put(literal, tmp);
-                }
             }
         }
         
@@ -131,30 +79,15 @@ public class SimpleActionManager implements IActionManager {
         
         this.setTargetCell((String)(keySet.toArray()[0]));
         
-        /*
-         for (String availableCell : this._avalibleAndNotAttendedCellsForSteps) {
-                        if (array[1].equals(availableCell)) {
-                            sentenceArray = sentence.split(":");
-                            String cellStringType = sentenceArray[0].replace("!", "");
-                            Class c = Class.forName(cellStringType);
-                            CellProperty cell = (CellProperty) c.newInstance();
-                            if (cell.toString().equals(Gold.literal())) {
-                                
-                            } else if (cell.toString().equals(Wumpus.literal())) {
-                                
-                            } else if (!cell.toString().equals(Pit.literal())) {
-                                
-                            }
-                        }
-                    }
-         */
     }
     
     private void setTargetCell(String cell) {
-        int[] rowAndCol = Helper.getRowAndColFromString(cell);
-        this._targetCell = new WorkSpaceCell();
-        this._targetCell.setRow(rowAndCol[0]);
-        this._targetCell.setCol(rowAndCol[1]);
+        this._targetCell = Helper.getRowAndColFromString(cell);
+    }
+    
+    @Override
+    public List<String> getDesiredCells() {
+        return this._desiredCells;
     }
     
     @Override

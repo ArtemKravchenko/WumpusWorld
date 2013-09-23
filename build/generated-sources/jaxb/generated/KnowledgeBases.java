@@ -70,6 +70,11 @@ public class KnowledgeBases {
      * 
      * 
      */
+    
+    public KnowledgeBases(){
+        this.sentences = new ArrayList<>();
+    }
+    
     public List<String> getSentences() {
         if (sentences == null) {
             sentences = new ArrayList<String>();
