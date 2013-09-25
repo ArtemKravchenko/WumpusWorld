@@ -5,6 +5,7 @@
 package Models;
 
 import Logic.ActionManagment.IActionManager;
+import Logic.ActionManagment.SimpleActionManager;
 import Logic.Helper;
 import Logic.InferenceAlgoritms.AbstractInferenceAlgorithm;
 import Logic.InferenceAlgoritms.AlgorithmsManager;
@@ -69,29 +70,9 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     }
 
     public void makeAction(AgentAction action) {
-
-        if (action == AgentAction.TurnLeft) {
-            if (this._currentState == AgentMoveState.FaceDown) {
-                this._currentState = AgentMoveState.FaceRight;
-            } else if (this._currentState == AgentMoveState.FaceLeft) {
-                this._currentState = AgentMoveState.FaceDown;
-            } else if (this._currentState == AgentMoveState.FaceRight) {
-                this._currentState = AgentMoveState.FaceUp;
-            } else {
-                this._currentState = AgentMoveState.FaceLeft;
-            }
-        } else if (action == AgentAction.TurnRight) {
-            if (this._currentState == AgentMoveState.FaceDown) {
-                this._currentState = AgentMoveState.FaceLeft;
-            } else if (this._currentState == AgentMoveState.FaceLeft) {
-                this._currentState = AgentMoveState.FaceUp;
-            } else if (this._currentState == AgentMoveState.FaceRight) {
-                this._currentState = AgentMoveState.FaceDown;
-            } else {
-                this._currentState = AgentMoveState.FaceRight;
-            }
-        } else if (action == AgentAction.Shoot) {
-            this._arrow = false;
+        
+        if (action == AgentAction.Grap) {
+            this._delegate.targetWasReached(this._target);
         } else if (action == AgentAction.MoveForward) {
             if (this._currentState == AgentMoveState.FaceDown) {
                 this._cell.setY(this._cell.getY() - 1);
@@ -102,9 +83,12 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
             } else {
                 this._cell.setY(this._cell.getY() + 1);
             }
+        } else if (action == AgentAction.Shoot) {
+            this._arrow = false;
         } else {
-            this._delegate.targetWasReached(this._target);
+            this._currentState = Helper.getStateAfterAction(action, this._currentState);
         }
+         
     }
 
     // Logic
@@ -128,10 +112,12 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         }
         // First Step: Take percept from current cell and Tell KBase about percept
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
-        // Generate all possible inference
+        // Generate all possible inferenc
         this._inferenceAlgorithm.setDesiredCells((List<String>) this._actionManager.getDesiredCells().keySet());
         this._inferenceAlgorithm.execute(this._kBase);
         // Second Step: Ask KBase, what is the next action
+        ((SimpleActionManager)this._actionManager).setCurrentCell(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
+        ((SimpleActionManager)this._actionManager).setAgentMoveState(this._currentState);
         this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
         AgentAction nextAction = this._actionManager.getNextAction(this._kBase);
         // Third Step: Make the current action

@@ -4,6 +4,7 @@
  */
 package Logic.ActionManagment;
 
+import Models.BaseWorkSpaceCell;
 import Models.Enums.AgentAction;
 import generated.KnowledgeBases;
 import java.util.HashMap;
@@ -17,5 +18,4 @@ public interface IActionManager {
     public void addToVisitedCells(String cellCoordinat);
     public AgentAction getNextAction(KnowledgeBases kBase);
     public HashMap<String, Integer> getDesiredCells();
-    
 }
