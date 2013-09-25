@@ -10,8 +10,11 @@ package Models.Roles;
  */
 public class Wumpus extends Role {
 
-    public static int weight () {
-        return 10;
+    public static int antiWeight(){
+        return 3000;
     }
     
+    public static int weight () {
+        return -1000;
+    }
 }

@@ -12,9 +12,13 @@ import java.util.List;
 import java.util.Queue;
 import Logic.Helper;
 import Models.BaseWorkSpaceCell;
+import Models.IBaseCellProperty;
+import Models.Symptoms.Symptom;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -25,21 +29,33 @@ public class SimpleActionManager implements IActionManager {
     private Queue<AgentAction> _actionQueue;
     private BaseWorkSpaceCell _targetCell;
     private List<String> _visitedcCells;
-    private List<String> _desiredCells;
+    private HashMap<String, Integer> _desiredCells;
     
     public SimpleActionManager() {
         this._actionQueue = new ArrayDeque<>();
         this._visitedcCells = new ArrayList<>();
-        this._desiredCells = new ArrayList<>();
+        this._desiredCells = new HashMap<>();
     }
     
     @Override
     public AgentAction getNextAction(KnowledgeBases kBase) {
-        this.prepeareActionArrayForAccesCell(kBase);
+        try {
+            this.prepeareActionArrayForAccesCell(kBase);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            Logger.getLogger(SimpleActionManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
         return this._actionQueue.poll();
     }
     
-    private void prepeareActionArrayForAccesCell(KnowledgeBases kBase) {
+    /*
+     * Logic:
+     * Consider only those sentences, that consist of one literal
+     * We split current sentence on position and symbol
+     * If position of current sentence do not contains in visited cells, then we add him to desired cells
+     * Increase integer value of desired cell on weight that correspond Entity weight getting from knowledge base
+     */
+    
+    private void prepeareActionArrayForAccesCell(KnowledgeBases kBase) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         
         if (this._actionQueue.size() == 0) {
             this._targetCell = null;
@@ -58,27 +74,38 @@ public class SimpleActionManager implements IActionManager {
         }
         
         String[] array;
-        Map<String, Integer> emptyCellsMap = new HashMap<>();
         String literal;
+        String position;
         
         for (String sentence: sentences) {
             if (!sentence.contains("=>")) {
                 array = sentence.split("\\:");
                 literal = array[0];
+                position = array[1];
+                if (!this._visitedcCells.contains(position)) {
+                    if (!this._desiredCells.keySet().contains(position)) {
+                        this._desiredCells.put(position, 0);
+                    }
+                    int counter = this._desiredCells.get(position);
+                    Class<IBaseCellProperty> c = (Class<IBaseCellProperty>) Class.forName(literal);
+                    Method method = (!literal.contains("!")) ? c.getClass().getMethod("weight", null): c.getClass().getMethod("antiWeight", null);
+                    method.invoke(c, null);
+                }
                 
             }
         }
         
-        Set<String> keySet = emptyCellsMap.keySet();
-        for (String cell: keySet) {
-            if (emptyCellsMap.get(cell) == 2) {
-                this.setTargetCell(cell);
-                return;
+        String keyOfMaximalCounter = "";
+        int max = 0;
+        for (String key: this._desiredCells.keySet()) {
+            if (this._desiredCells.get(key) > max) {
+                max = this._desiredCells.get(key);
+                keyOfMaximalCounter = key;
             }
         }
         
-        this.setTargetCell((String)(keySet.toArray()[0]));
-        
+        this.setTargetCell(keyOfMaximalCounter);
+        // TODO
     }
     
     private void setTargetCell(String cell) {
@@ -86,7 +113,7 @@ public class SimpleActionManager implements IActionManager {
     }
     
     @Override
-    public List<String> getDesiredCells() {
+    public HashMap<String, Integer> getDesiredCells() {
         return this._desiredCells;
     }
     

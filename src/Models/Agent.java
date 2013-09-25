@@ -6,6 +6,7 @@ package Models;
 
 import Logic.ActionManagment.IActionManager;
 import Logic.Helper;
+import Logic.InferenceAlgoritms.AbstractInferenceAlgorithm;
 import Logic.InferenceAlgoritms.AlgorithmsManager;
 import Logic.InferenceAlgoritms.IKBaseSupervisorDelegate;
 import Logic.WumpusWorldGame;
@@ -14,10 +15,15 @@ import Models.Enums.AgentAction;
 import Models.Abstract.AbstractAgent;
 import Models.Abstract.IAgentDelegate;
 import Models.Enums.AgentLifeState;
+import Models.Symptoms.Symptom;
 import generated.KnowledgeBases;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 /**
  *
@@ -45,8 +51,10 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     // Init methods
     private void initAlgorithm() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        String[] array = new String[]{"ModelCheckingAlgorithm"};
-        this._algoritmManager = new AlgorithmsManager(array);
+        Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forJavaClassPath()));
+        Set<Class<? extends AbstractInferenceAlgorithm>> allAlgoritms = reflections.getSubTypesOf(AbstractInferenceAlgorithm.class);
+  
+        this._algoritmManager = new AlgorithmsManager(allAlgoritms.toArray());
         this._inferenceAlgorithm = this._algoritmManager.getFirstAlgorithm();
         this._inferenceAlgorithm.setKBaseSupervisorDelegate((Logic.InferenceAlgoritms.IKBaseSupervisorDelegate) this);
     }
@@ -121,7 +129,7 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         // First Step: Take percept from current cell and Tell KBase about percept
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
         // Generate all possible inference
-        this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
+        this._inferenceAlgorithm.setDesiredCells((List<String>) this._actionManager.getDesiredCells().keySet());
         this._inferenceAlgorithm.execute(this._kBase);
         // Second Step: Ask KBase, what is the next action
         this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));

@@ -16,7 +16,11 @@ public class Breeze extends Symptom {
         this._role = new Pit();
     }
     
-    public static int weight() {
+    public static int antiWeight(){
+        return 0;
+    }
+    
+    public static int weight () {
         return 1000;
     }
 }

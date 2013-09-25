@@ -18,6 +18,10 @@ public class Gold extends Role implements ITarget {
         return 1000000;
     }
     
+    public static int antiWeight(){
+        return 0;
+    }
+    
     @Override
     public AgentLifeState getLifeState() {
         return AgentLifeState.Alive;

@@ -6,6 +6,7 @@ package wumpusworldproject;
 
 import Logic.ActionManagment.IActionManager;
 import Logic.ActionManagment.SimpleActionManager;
+import Logic.InferenceAlgoritms.AbstractInferenceAlgorithm;
 import Logic.WumpusWorldGame;
 import Models.Agent;
 import Models.BaseWorkSpace;
@@ -15,6 +16,10 @@ import Models.Roles.Pit;
 import Models.Roles.Wumpus;
 import generated.KnowledgeBases;
 import java.util.List;
+import java.util.Set;
+import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 /**
  *
@@ -24,11 +29,10 @@ public class WumpusWorldProject {
 
     
     public static void main(String[] args) {
-        /*
-        Reflections reflections = new Reflections("my.project.prefix");
-
-        Set<Class<? extends Object>> allClasses = reflections.getSubTypesOf(Object.class);
-        */
+        
+        
+        Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forJavaClassPath()));
+        Set<Class<? extends AbstractInferenceAlgorithm>> allAlgoritms = reflections.getSubTypesOf(AbstractInferenceAlgorithm.class);
         
         IActionManager manager = new SimpleActionManager(); 
         // Init kBase

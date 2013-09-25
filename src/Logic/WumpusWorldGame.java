@@ -9,7 +9,6 @@ import Models.Abstract.AbstractEnviropment;
 import Models.Abstract.ITarget;
 import Models.Agent;
 import Models.BaseWorkSpace;
-import generated.KnowledgeBases;
 
 /**
  *

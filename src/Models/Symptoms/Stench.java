@@ -15,7 +15,12 @@ public class Stench extends Symptom {
     public Stench () {
         this._role = new Wumpus();
     }
+    
+    public static int antiWeight(){
+        return 0;
+    }
+    
     public static int weight () {
-        return 100;
-    } 
+        return 1000;
+    }
 }

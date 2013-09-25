@@ -16,7 +16,11 @@ public class Glitter extends Symptom {
         this._role = new Gold();
     }
     
-    public static int weight() {
-        return 100000;
+    public static int antiWeight(){
+        return -1000;
+    }
+    
+    public static int weight () {
+        return 10000;
     }
 }

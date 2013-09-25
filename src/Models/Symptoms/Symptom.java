@@ -37,7 +37,6 @@ public class Symptom implements IBaseCellProperty {
         
         // Add expression
         sentence = "";
-        Boolean needConjuction = false;
         
         sentence += Helper.getEntityNameFromClass(this.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, col);
         sentence += "=>";
@@ -47,19 +46,24 @@ public class Symptom implements IBaseCellProperty {
         int leftCell = row - 1;
         int downCell = col - 1;
         
-        sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, rightCell);
-
-        sentence += Helper.getConjuction();
-        sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(upCell, col);
-        
-        sentence += Helper.getConjuction();
-        sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, leftCell);
-       
-        sentence += Helper.getConjuction();
-        sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(downCell, col);
-        
+        if (rightCell >= 0 && rightCell < 4) {
+            sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, rightCell);
+            sentence += Helper.getConjuction();
+        }
+        if (upCell >= 0 && upCell < 4) {
+            sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(upCell, col);
+            sentence += Helper.getConjuction();
+        }
+        if (leftCell >= 0 && leftCell < 4) { 
+            sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, leftCell);
+            sentence += Helper.getConjuction();
+        }
+        if (downCell >= 0 && downCell < 4) {
+            sentence += Helper.getEntityNameFromClass(this._role.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(downCell, col);
+        }
+   
         sentences.add(sentence);
-        
+             
         return sentences;
     }
 

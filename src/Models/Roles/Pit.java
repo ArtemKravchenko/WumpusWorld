@@ -10,9 +10,12 @@ package Models.Roles;
  */
 public class Pit extends Role {
     
+    public static int antiWeight(){
+        return 3000;
+    }
     
     public static int weight () {
-        return 1;
+        return -2000;
     }
     
 }
