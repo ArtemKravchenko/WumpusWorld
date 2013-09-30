@@ -6,6 +6,7 @@ package Logic;
 
 import Models.Abstract.AbstractAgent;
 import Models.Abstract.AbstractEnviropment;
+import Models.Abstract.IAgentDelegate;
 import Models.Abstract.ITarget;
 import Models.Agent;
 import Models.BaseWorkSpace;
@@ -24,10 +25,10 @@ public class WumpusWorldGame extends AbstractEnviropment {
         this._agentWasKilled = false;
         this._goldWasFound = false;
         
-        this._agent.setDelegate(this);
+        this._agent = agent;
+        this._agent.setDelegate((IAgentDelegate)this);
         
         this._stepCounter = 0; 
-        this._agent = agent;
         this._workSpace = workSpace;
         this.writeLog("Initialize a game parameters");
     }
@@ -36,8 +37,7 @@ public class WumpusWorldGame extends AbstractEnviropment {
     public void starteGame() {
         this.writeLog("Game was started");
         
-        this._agent.setY(0);
-        this._agent.setX(0);
+        this._agent.setCurrentCell(((BaseWorkSpace)this._workSpace).getWorkSpaceCell(0, 0));
         
         this.printCurrentGameState();
     }
@@ -48,6 +48,9 @@ public class WumpusWorldGame extends AbstractEnviropment {
     }
     
     public void simulateGame(){
+        while (!this._goldWasFound || !this._agentWasKilled) {
+            this.doNextStep();
+        }
         if (this._goldWasFound) {
             this.writeLog("The gold was found!");
             return;
@@ -56,7 +59,6 @@ public class WumpusWorldGame extends AbstractEnviropment {
             this.writeLog("The agent was killed!");
             return;
         }
-        this.doNextStep();
     }
     
     public final void writeLog(String log) {
@@ -79,5 +81,10 @@ public class WumpusWorldGame extends AbstractEnviropment {
     @Override
     public void targetWasReached(ITarget target) {
         this._goldWasFound = true;
+    }
+
+    @Override
+    public void setAgentCell(int y, int x) {
+        this._agent.setCurrentCell(((BaseWorkSpace)this._workSpace).getWorkSpaceCell(y, x));
     }
 }

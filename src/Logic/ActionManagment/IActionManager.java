@@ -4,18 +4,19 @@
  */
 package Logic.ActionManagment;
 
-import Models.BaseWorkSpaceCell;
+import Models.Abstract.IPrintState;
 import Models.Enums.AgentAction;
 import generated.KnowledgeBases;
-import java.util.HashMap;
+import java.util.List;
 
 /**
  *
  * @author admin
  */
-public interface IActionManager {
+public interface IActionManager extends IPrintState {
  
     public void addToVisitedCells(String cellCoordinat);
     public AgentAction getNextAction(KnowledgeBases kBase);
-    public HashMap<String, Integer> getDesiredCells();
+    public List<String> getDesiredCells();
+    public Boolean queueIsEmpty();
 }

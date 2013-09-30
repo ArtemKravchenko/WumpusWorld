@@ -39,11 +39,11 @@ public class SimpleActionManager implements IActionManager {
         this._actionQueue = new ArrayDeque<>();
         this._visitedcCells = new ArrayList<>();
         this._desiredCells = new HashMap<>();
-        this._workSpaceGraph = new Graph<>();
     }
     
     @Override
     public AgentAction getNextAction(KnowledgeBases kBase) {
+        this.writeLog("-- Simple Action Manager (Get Next Action) --");
         if (this._actionQueue.isEmpty()) {
             this._targetCell = null;
             try {
@@ -68,39 +68,43 @@ public class SimpleActionManager implements IActionManager {
         List<String> sentences = new ArrayList<>(kBase.getSentences());
         
         // Evaluation of cell
-        this.updateDesiredCells(sentences);
+        this.evaluateCounterOfDesiredCells(sentences);
         
         // Set target cell
         String keyOfMaximalCounter = this.getKeyWithMaximalValue();
-        this.setTargetCell(keyOfMaximalCounter);
+        if (!keyOfMaximalCounter.equals("")) {
+            // Set target cell
+            this.setTargetCell(keyOfMaximalCounter);
         
-        // Generate optimal route to target cell
-        this.fillQueueOfActions();
+            // Generate optimal route to target cell
+            this.fillQueueOfActions();
+        } else {
+            this._actionQueue.add(AgentAction.MoveForward);
+        }
     }
     
     private void fillQueueOfActions() {  
         // Prepeare work space graph for searching
         this.updateGraphWithVisitedCells();
         // Find shortes path to target cell
-        List<String> shortestPath = this._workSpaceGraph.getShortesPath(this._currentCell, this._targetCell);
+        Queue<String> shortestPath = this._workSpaceGraph.getShortesPath(this._currentCell, this._targetCell);
         // Fill action queue correspond for path
         this.fillQueueOfActionsBasedOnPath(shortestPath);
     }
     
-    private void fillQueueOfActionsBasedOnPath(List<String> path) {
-        if (path.get(0).equals(this._currentCell)) {
-            path.remove(0);
-        }
+    private void fillQueueOfActionsBasedOnPath(Queue<String> path) {
         String current = this._currentCell;
-        String next = "";
-        for (String cell: path) {
-            next = cell;
-            List<AgentAction> actions = this.getListOfActionsToNeighbor(current, next);
-            for (AgentAction action: actions) {
-                this._currentMoveState = Helper.getStateAfterAction(action, this._currentMoveState);
-                this._actionQueue.add(action);
+        String next = null;
+        while(!path.isEmpty()) {
+            next = path.poll();
+            if (!next.equals(this._currentCell)) {
+                List<AgentAction> actions = this.getListOfActionsToNeighbor(current, next);
+                for (AgentAction action: actions) {
+                    this._currentMoveState = Helper.getStateAfterAction(action, this._currentMoveState);
+                    this._actionQueue.add(action);
+                }
+                current = next;
             }
-            current = next;
         }
     }
     
@@ -109,7 +113,8 @@ public class SimpleActionManager implements IActionManager {
         // Find correct direction
         AgentMoveState requiredState = Helper.getCorrectMoveState(currentCell, nextCell);
         if (!this._currentMoveState.equals(requiredState)) {
-            actionsList.addAll(Helper.getListMoveStateForReachableDesired(this._currentMoveState, requiredState));
+            List<AgentAction> actions = Helper.getListMoveStateForReachableDesired(this._currentMoveState, requiredState);
+            actionsList.addAll(actions);
         }
         
         // Add last Action for transition
@@ -118,22 +123,15 @@ public class SimpleActionManager implements IActionManager {
         return actionsList;
     }
     
-    
     private void updateGraphWithVisitedCells() {
-        if (this._workSpaceGraph.getVertices().isEmpty()) {
-            for (String cell: this._visitedcCells) {
-                this._workSpaceGraph.addVertex(cell);
-            }
-            for (String cell: this._visitedcCells) {
-                this.addEdgeToGrahForCell(cell);
-            }
-        } else if (this._workSpaceGraph.getVertices().size() < this._visitedcCells.size()) {
-            for (int i = this._workSpaceGraph.getVertices().size(); i < this._visitedcCells.size(); i++) {
-                this._workSpaceGraph.addVertex(this._visitedcCells.get(i));
-            }
-            for (int i = this._workSpaceGraph.getVertices().size(); i < this._visitedcCells.size(); i++) {
-                this.addEdgeToGrahForCell(this._visitedcCells.get(i));
-            }
+        this._workSpaceGraph = new Graph();
+        // Update vertices
+        for (String cell: this._visitedcCells) {
+            this._workSpaceGraph.addVertex(cell);
+        }
+        // Update edges
+        for (String cell: this._visitedcCells) {
+            this.addEdgeToGrahForCell(cell);
         }
     }
     
@@ -146,21 +144,22 @@ public class SimpleActionManager implements IActionManager {
         String leftNeighbor = Helper.getStringFromRowAndCol(workSpaceCell.getY() - 1, workSpaceCell.getX());
         String downNeighbor = Helper.getStringFromRowAndCol(workSpaceCell.getY(), workSpaceCell.getX() - 1);
                 
-        if (this._visitedcCells.contains(upNeighbor)) {
+        if (this._visitedcCells.contains(upNeighbor) || this._desiredCells.containsKey(upNeighbor)) {
             neighborhood.add(upNeighbor);
         }
-        if (this._visitedcCells.contains(rightNeighbor)) {
+        if (this._visitedcCells.contains(rightNeighbor) || this._desiredCells.containsKey(rightNeighbor)) {
             neighborhood.add(rightNeighbor);
         }
-        if (this._visitedcCells.contains(leftNeighbor)) {
+        if (this._visitedcCells.contains(leftNeighbor) || this._desiredCells.containsKey(leftNeighbor)) {
             neighborhood.add(leftNeighbor);
         }
-        if (this._visitedcCells.contains(downNeighbor)) {
+        if (this._visitedcCells.contains(downNeighbor) || this._desiredCells.containsKey(downNeighbor)) {
             neighborhood.add(downNeighbor);
         }
         
         for (String neighbor: neighborhood) {
             this._workSpaceGraph.addEdge(cell, neighbor);
+            this._workSpaceGraph.setWeight(cell, neighbor, 1.0);
         }
     }
     
@@ -177,28 +176,100 @@ public class SimpleActionManager implements IActionManager {
         return keyOfMaximalCounter;
     }
     
-    private void updateDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        String[] array;
-        String literal;
-        String position;
-        
+    private void evaluateCounterOfDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {        
         for (String sentence: sentences) {
             if (!sentence.contains("=>")) {
-                array = sentence.split("\\:");
-                literal = array[0];
-                position = array[1];
-                if (!this._visitedcCells.contains(position)) {
-                    if (!this._desiredCells.keySet().contains(position)) {
-                        this._desiredCells.put(position, 0);
+                this.evaluateSentence(sentence);
+            } else {
+                String[] array = sentence.split("\\=>");
+                String rightSide = array[1];
+                String[] literals = rightSide.split("\\" + Helper.getConjuction());
+                if (literals.length > 1) {
+                    for (String literal: literals) {
+                        this.evaluateSentence(literal);
                     }
-                    int counter = this._desiredCells.get(position);
-                    Class<IBaseCellProperty> c = (Class<IBaseCellProperty>) Class.forName(literal);
-                    Method method = (!literal.contains("!")) ? c.getClass().getMethod("weight", null): c.getClass().getMethod("antiWeight", null);
-                    method.invoke(c, null);
                 }
             }
         }
     } 
+    
+    private void evaluateSentence(String sentence) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        String[] array;
+        String literal;
+        String position;
+        
+        array = sentence.split("\\:");
+        if (array.length == 1) {
+            this.writeLog("");
+        }
+        literal = array[0];
+        position = array[1];
+        if (!this._visitedcCells.contains(position)) {
+            if (!this._desiredCells.keySet().contains(position)) {
+                this._desiredCells.put(position, 0);
+            }
+            int counter = this._desiredCells.get(position);
+            String tmpLiteral = literal.replace("!", "");
+            tmpLiteral = this.getFullClassName(tmpLiteral);
+            Class<IBaseCellProperty> c = (Class<IBaseCellProperty>) Class.forName(tmpLiteral);
+            Method method = (!literal.contains("!")) ? c.getMethod("weight", (Class<?>) null): c.getMethod("antiWeight", (Class<?>[])null);
+            counter += (int) method.invoke((Object) null);
+            this._desiredCells.put(position, counter);
+        }
+    }
+    
+    private String getFullClassName(String className) {
+        String[] symptoms = Helper.getAllSymptoms();
+        for (String symptom: symptoms) {
+            if (symptom.contains(className)) {
+                return symptom;
+            }
+        }
+        String[] roles = Helper.getAllRoles();
+        for (String role: roles) {
+            if (role.contains(className)) {
+                return role;
+            }
+        }
+        
+        return null;
+    }
+    
+    private void updateDesiredCells() {
+        int rightCell = Helper.getRowAndColFromString(this._currentCell).getX() + 1;
+        int upCell = Helper.getRowAndColFromString(this._currentCell).getY() + 1;
+        int leftCell = Helper.getRowAndColFromString(this._currentCell).getX() - 1;
+        int downCell = Helper.getRowAndColFromString(this._currentCell).getY() - 1;
+        
+        if (rightCell >= 0 && rightCell < 4) {
+            String rightCellString = Helper.getStringFromRowAndCol(Helper.getRowAndColFromString(this._currentCell).getY(), rightCell);
+            if (!this._desiredCells.containsKey(rightCellString) && !this._visitedcCells.contains(rightCellString)) {
+                this._desiredCells.put(rightCellString, 0);
+                this.writeLog("Cell " + rightCellString + " was added to desired cells");
+            }
+        }
+        if (upCell >= 0 && upCell < 4) {
+            String upCellString = Helper.getStringFromRowAndCol(upCell, Helper.getRowAndColFromString(this._currentCell).getX());
+            if (!this._desiredCells.containsKey(upCellString) && !this._visitedcCells.contains(upCellString)) {
+                this._desiredCells.put(upCellString, 0);
+                this.writeLog("Cell " + upCellString + " was added to desired cells");
+            }
+        }
+        if (leftCell >= 0 && leftCell < 4) { 
+            String leftCellString = Helper.getStringFromRowAndCol(Helper.getRowAndColFromString(this._currentCell).getY(), leftCell);
+            if (!this._desiredCells.containsKey(leftCellString) && !this._visitedcCells.contains(leftCellString)) {
+                this._desiredCells.put(leftCellString, 0);
+                this.writeLog("Cell " + leftCellString + " was added to desired cells");
+            }
+        }
+        if (downCell >= 0 && downCell < 4) {
+            String downCellString = Helper.getStringFromRowAndCol(downCell, Helper.getRowAndColFromString(this._currentCell).getX());
+            if (!this._desiredCells.containsKey(downCellString) && !this._visitedcCells.contains(downCellString)) {
+                this._desiredCells.put(downCellString, 0);
+                this.writeLog("Cell " + downCellString + " was added to desired cells");
+            }
+        } 
+    }
     
     private void setTargetCell(String cell) {
         this._targetCell = cell;
@@ -206,6 +277,9 @@ public class SimpleActionManager implements IActionManager {
     
     public void setCurrentCell(String cell) {
         this._currentCell = cell;
+        this._visitedcCells.add(cell);
+        this._desiredCells.remove(cell);
+        this.updateDesiredCells();
     }
     
     public void setAgentMoveState(AgentMoveState state) {
@@ -213,15 +287,52 @@ public class SimpleActionManager implements IActionManager {
     }
     
     @Override
-    public HashMap<String, Integer> getDesiredCells() {
-        return this._desiredCells;
+    public List<String> getDesiredCells() {
+        List<String> desiredCells = new ArrayList<>();
+        for (String key: this._desiredCells.keySet()) {
+            desiredCells.add(key);
+        }
+        return desiredCells;
     }
     
     @Override
     public void addToVisitedCells(String cellCoordinat){
         if (!this._visitedcCells.contains(cellCoordinat)) {
             this._visitedcCells.add(cellCoordinat);
+            this.writeLog("Cell " + cellCoordinat + "was added to visisted cells" );
         }
+    }
+
+    @Override
+    public void printCurrentState() {
+        this.writeLog("----- Simple Action Manager (State) ------");
+        this.writeLog("Current cell         : " + this._currentCell);
+        this.writeLog("Current move state   : " + this._currentMoveState);
+        this.writeLog("Target cell          : " + this._targetCell);
+        this.writeLog("Visited cells        : " + this._visitedcCells.size());
+        for (String cell: this._visitedcCells) {
+            this.writeLog(cell);
+        }
+        this.writeLog("Desired cells        : " + this._desiredCells.size());
+        for (String cell: this._desiredCells.keySet()) {
+            this.writeLog(cell + ": " + this._desiredCells.get(cell));
+        }
+        this.writeLog("Actions queue        : " + this._actionQueue.size());
+        for (AgentAction action: this._actionQueue) {
+            this.writeLog(action.toString());
+        }
+        this.writeLog("-------------------------------------------");
+    }
+
+    @Override
+    public void writeLog(String log) {
+        System.out.println(log);
+        // TODO
+    }
+
+    @Override
+    public Boolean queueIsEmpty() {
+        return this._actionQueue.isEmpty();
     }
     
 }

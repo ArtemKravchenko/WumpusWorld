@@ -13,7 +13,8 @@ import java.util.List;
  */
 public interface IBaseCellProperty {
     
-    public List<String> getSentences(int row, int col);
+    public List<String> getPositiveSentences(int row, int col);
+    public List<String> getNegativeSentences(int row, int col);
     public AgentLifeState getLifeState();
     
 }

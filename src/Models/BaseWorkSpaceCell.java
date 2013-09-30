@@ -45,12 +45,18 @@ public class BaseWorkSpaceCell extends AbstractWorkSpaceCell {
     }
 
     @Override
-    public void setX(int x) {
+    public void setCurrentCell(int y, int x) {
         this._x = x;
+        this._y = y;
+    }
+    
+    @Override
+    public String toString() {
+        return "[" + this._y + "," + this._x + "]";
     }
 
     @Override
-    public void setY(int y) {
-        this._y = y;
+    public AbstractWorkSpaceCell getCurrentCell() {
+        return this;
     }
 }

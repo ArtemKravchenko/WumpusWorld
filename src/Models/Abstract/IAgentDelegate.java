@@ -12,4 +12,5 @@ public interface IAgentDelegate {
     
     public void agentWasKilled(AbstractAgent agent); 
     public void targetWasReached(ITarget target);
+    public void setAgentCell(int y, int x);
 }

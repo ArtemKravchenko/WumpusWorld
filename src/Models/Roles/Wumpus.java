@@ -4,12 +4,14 @@
  */
 package Models.Roles;
 
+import Models.Symptoms.Stench;
+
 /**
  *
  * @author admin
  */
 public class Wumpus extends Role {
-
+    
     public static int antiWeight(){
         return 3000;
     }

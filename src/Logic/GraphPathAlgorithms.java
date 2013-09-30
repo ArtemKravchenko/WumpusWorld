@@ -1,10 +1,13 @@
 package Logic;
 
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Stack;
 
 /*
  * To change this template, choose Tools | Templates
@@ -66,7 +69,7 @@ public class GraphPathAlgorithms<VertexType> {
         // Array of distance from source vertex to another
         List<Double> distanceArray = new ArrayList<>();
         List<VertexType> previousArray = new ArrayList<>();
-        List<VertexType> vertices = this._graph.getVertices();
+        List<VertexType> vertices = new ArrayList<>(this._graph.getVertices());
         
         int indexOfSourceVertex = vertices.indexOf(source);
         
@@ -122,14 +125,16 @@ public class GraphPathAlgorithms<VertexType> {
         return ((List<VertexType>)this._graph.getVertices()).get(indexWithMinValue);
     }
     
-    public List<VertexType> rebuildShortesPathFromSourceToTarget(VertexType source, VertexType target, List<VertexType> previousArray) {
-        List<VertexType> sequence = new ArrayList<>();
+    public Queue<VertexType> rebuildShortesPathFromSourceToTarget(VertexType source, VertexType target, List<VertexType> previousArray) {
+        Queue sequence = new ArrayDeque();
         List<VertexType> vertices = this._graph.getVertices();
         
         int indexOfTarget = vertices.indexOf(target);
-        while (previousArray.get(indexOfTarget) != null) {
-            sequence.set(0,previousArray.get(indexOfTarget));
-            indexOfTarget = vertices.indexOf(previousArray.indexOf(indexOfTarget));
+        VertexType previousForTarget = previousArray.get(indexOfTarget);
+        while (previousForTarget != null) {
+            sequence.add(previousForTarget);
+            indexOfTarget = vertices.indexOf(previousForTarget);
+            previousForTarget = previousArray.get(indexOfTarget);
         }
         
         return sequence;

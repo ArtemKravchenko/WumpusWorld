@@ -16,6 +16,6 @@ public abstract class AbstractWorkSpaceCell {
     public abstract int getX();
     public abstract int getY();
     
-    public abstract void setX(int x);
-    public abstract void setY(int y);
+    public abstract void setCurrentCell(int y, int x);
+    public abstract AbstractWorkSpaceCell getCurrentCell();
 }

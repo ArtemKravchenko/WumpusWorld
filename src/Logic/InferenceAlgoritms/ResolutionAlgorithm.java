@@ -5,6 +5,8 @@
 package Logic.InferenceAlgoritms;
 
 import Logic.Helper;
+import Models.Roles.Pit;
+import Models.Roles.Wumpus;
 import generated.KnowledgeBases;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,14 +20,31 @@ import java.util.Set;
  */
 public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
 
+    public ResolutionAlgorithm () {
+        this._desiredCells = new ArrayList<>();
+    }
+    
     @Override
     public void execute(KnowledgeBases kBase) {
         int oldKBaseSize = kBase.getSentences().size();
-        
-        for (String cell: this._desiredCells) {
-            Boolean cellIsTrueInCurrentModel = this.resolution(kBase, cell);
-            if (cellIsTrueInCurrentModel) {
-                kBase.addSentence(cell);
+        String newCell = null;
+        Boolean cellIsTrueInCurrentModel;
+        for (String stringCell: this._desiredCells) {
+            
+            newCell = Helper.getEntityNameFromClass(new Pit().getClass().getName()) + ":" + stringCell;
+            if (!this.kBaseContainClause(kBase, newCell)) {
+                cellIsTrueInCurrentModel = this.resolution(kBase, newCell);
+                if (cellIsTrueInCurrentModel) {
+                    kBase.addSentence("!" + newCell);
+                }
+            }
+            
+            newCell = Helper.getEntityNameFromClass(new Wumpus().getClass().getName()) + ":" + stringCell;
+            if (!this.kBaseContainClause(kBase, newCell)) {
+                cellIsTrueInCurrentModel = this.resolution(kBase, newCell);
+                if (cellIsTrueInCurrentModel) {
+                    kBase.addSentence("!" + newCell);
+                }
             }
         }
         
@@ -34,19 +53,54 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
         }
     }
     
-    private Boolean resolution(KnowledgeBases kBase, String alfa) {
-        Set<String> clauses = getCNF(kBase, alfa);
-        Set<String> newSentences = new HashSet<>();
+    private Boolean kBaseContainClause(KnowledgeBases kBase ,String clause) {
+        List<String> sentences = kBase.getSentences();
+        for (String sentence : sentences) {
+            if (sentence.contains(clause)) {
+                if (sentence.contains(Helper.getDisjuction() + clause) || sentence.contains(clause  +Helper.getDisjuction())) {
+                    continue;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private Boolean resolution(KnowledgeBases kBase, String notAlfa) {
+        Set<String> clauses = getCNF(kBase);
         
+        /*
+        // First method
+        Set<String> firstResolution = this.resolveEachWithOne(clauses, notAlfa);
+        
+        if (firstResolution.contains("")) {
+            return true;
+        }
+        
+        Set<String> secondResolution = this.resolvesEachOther(clauses);
+        secondResolution = this.resolveEachWithOne(secondResolution, notAlfa);
+        
+        if (secondResolution.contains("")) {
+            return true;
+        } else {
+            return false;
+        }
+        */
+        
+        // Second method
+        clauses.add(notAlfa);
+        Set<String> newSentences = new HashSet<>();
         while (true) {
-            for (int i = 0; i < clauses.size(); i++) {
-                List<String> clausesList = new ArrayList<>(Arrays.asList((String[]) clauses.toArray()));
+           for (int i = 0; i < clauses.size(); i++) {
+                String[] clausesArray = (String[]) clauses.toArray(new String[clauses.size()]);
+                List<String> clausesList = new ArrayList<>(Arrays.asList(clausesArray));
                 String currentClause = clausesList.get(i);
-                List<String> restClauses = clausesList.subList(i + 1, clausesList.size() - 1);
+                List<String> restClauses = clausesList.subList(i + 1, clausesList.size());
                 for (int j = 0; j < restClauses.size(); j++) {
-                    String resolvents = this.resolve(currentClause, restClauses.get(j));
-                    if (resolvents.equals("")) return true;
-                    newSentences.add(resolvents);
+                    String nextClause = restClauses.get(j);
+                    Set<String> resolvents = this.resolve(currentClause, nextClause);
+                    if (resolvents.contains("")) return true;
+                    newSentences.addAll(resolvents);
                 }
             }
             if (newSentences.containsAll(clauses)) return false;
@@ -54,27 +108,54 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
         }
     }
     
-    private String resolve(String clause1, String clause2) {
-        String resolution = "";
+    private Set<String> resolvesEachOther(Set<String> clauses) {
+        Set<String> resolvents = new HashSet<>();
         
-        String[] literalsOfFirstClause = clause1.split("\\" + Helper.getConjuction());
-        String[] literalsOfSecondClause = clause2.split("\\" + Helper.getConjuction());
+        for (int i = 0; i < clauses.size(); i++) {
+                List<String> clausesList = new ArrayList<>(Arrays.asList((String[]) clauses.toArray(new String[clauses.size()])));
+                String currentClause = clausesList.get(i);
+                List<String> restClauses = clausesList.subList(i + 1, clausesList.size());
+                for (int j = 0; j < restClauses.size(); j++) {
+                    String nextClause = restClauses.get(j);
+                    resolvents.addAll(this.resolve(currentClause, nextClause));
+                }
+            }
+        
+        return resolvents;
+    }
+    
+    private Set<String> resolveEachWithOne(Set<String> clauses, String alfa) {
+        Set<String> resolvents = new HashSet<>();
+        
+        for (String clause: clauses) {
+            Set<String> resolve = this.resolve(clause, alfa);
+            resolvents.addAll(resolve);
+        }
+        
+        return resolvents;
+    }
+    
+    private Set<String> resolve(String clause1, String clause2) {
+        Set<String> resolutions = new HashSet<>();
+        
+        String[] literalsOfFirstClause = clause1.split("\\" + Helper.getDisjuction());
+        String[] literalsOfSecondClause = clause2.split("\\" + Helper.getDisjuction());
         
         for (int i = 0; i < literalsOfFirstClause.length; i++) {
             for (int j = 0; j < literalsOfSecondClause.length; j++) {
                 if (literalsOfFirstClause[i].equals("!" + literalsOfSecondClause[j]) || 
                     literalsOfSecondClause[j].equals("!" + literalsOfFirstClause[i])) {
-                    resolution += "";
+                    resolutions.add("");
                 } else {
-                    resolution += literalsOfFirstClause[i] + Helper.getConjuction() + literalsOfSecondClause;
+                    resolutions.add(literalsOfFirstClause[i] + Helper.getDisjuction()+ literalsOfSecondClause);
                 }
             }
         }
         
-        return resolution;
+        return resolutions;
     }
     
-    private Set<String> getCNF(KnowledgeBases kBase, String alfa) {
+    private Set<String> getCNF(KnowledgeBases kBase) {
         Set<String> clauses = new HashSet<>();
         
         List<String> kBaseSentences = kBase.getSentences();
@@ -90,17 +171,18 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
             if (currentClause.contains("!(")) {
                 currentClause = this.openBracketsWithNegation(currentClause);
             }
-            if (currentClause.contains(Helper.getConjuction() + "(") || currentClause.contains(")" + Helper.getConjuction())) {
-                if (currentClause.contains(Helper.getDisjuction())) {
-                    currentClause = this.openBracketsWithDistributivityCon(currentClause);
-                }
-            }
-            if (currentClause.contains("!(!")) {
+            if (currentClause.contains("!!")) {
                 currentClause = this.eliminateDoubleNegatiation(currentClause);
             }
-            
-            String[] array = currentClause.split("\\" + Helper.getDisjuction());
-            clauses.addAll(Arrays.asList(array));
+            if (currentClause.contains(Helper.getDisjuction()) && currentClause.contains(Helper.getConjuction())) {
+                currentClause = this.openBracketsWithDistributivityCon(currentClause);
+            }
+            if (currentClause.contains(Helper.getConjuction())) {
+                String[] array = currentClause.split("\\" + Helper.getConjuction());
+                clauses.addAll(Arrays.asList(array));
+                continue;
+            }
+            clauses.add(currentClause);
         }
         
         return clauses;
@@ -111,28 +193,33 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
     }
     
     private String eliminateBiconditional(String clause) {
+        this.writeLog("Eliminate biconditional for sentence: " + clause);
         String[] array = clause.split("\\<=>");
-        String newClause = "(" + array[0] + "=>" + array[1] + ")" + Helper.getDisjuction() + "(" + array[1] + "=>" + array[0] + ")";
-        
+        String newClause = array[0] + "=>" + array[1] + Helper.getConjuction()+ array[1] + "=>" + array[0];
+        this.writeLog("Receive : " + newClause);
         return newClause;
     }
     
     private String eliminateImplication(String clause) {
+        this.writeLog("Eliminate implication for sentence: " + clause);
         String[] array = clause.split("\\=>");
-        String newClause = "!" + array[0] + Helper.getConjuction() + array[1];
         
+        String newClause = "!" + array[0] + Helper.getDisjuction()+ array[1];
+        this.writeLog("Receive : " + newClause);
         return newClause;
     } 
     
     private String openBracketsWithDistributivityCon(String clause) {
-        String[] array = clause.split("\\" + Helper.getConjuction());
-        String[] array2 = array[1].replace("(", "").replace(")", "").split("\\" + Helper.getDisjuction());
-        String newClaues = "(" + array[0] + Helper.getConjuction()+ array2[0] + ")" + Helper.getDisjuction() +  "(" + array[0] + Helper.getConjuction() + array2[1] + ")";
-        
-        return "";
+        this.writeLog("Open bracket with distributive conjuction for sentence: " + clause);
+        String[] array = clause.split("\\" + Helper.getDisjuction());
+        String[] array2 = array[1].replace("(", "").replace(")", "").split("\\" + Helper.getConjuction());
+        String newClause = array[0] + Helper.getDisjuction()+ array2[0] + Helper.getConjuction() + array[0] + Helper.getDisjuction()+ array2[1];
+        this.writeLog("Receive : " + newClause);
+        return newClause;
     }
     
     private String openBracketsWithNegation(String clause) {
+        this.writeLog("Open bracket with negatiation for sentence: " + clause);
         clause = clause.replace("!(", "").replace(")", "");
         String[] array;
         String splitSymbol = null, connectSymbol = null; 
@@ -145,7 +232,21 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
         }
         array = clause.split(splitSymbol);
         String newClause = "!" + array[0] + connectSymbol + "!" + array[1];
-        
+        this.writeLog("Receive :" + newClause);
         return newClause;
     }
+
+    @Override
+    public void printCurrentState() {
+        this.writeLog("Desired cells:" + this._desiredCells.size());
+        for (String cell: this._desiredCells) {
+            this.writeLog(cell);
+        }
+    }
+
+    @Override
+    public void writeLog(String log) {
+        System.out.println(log);
+    }
+    
 }

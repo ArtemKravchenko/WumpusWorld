@@ -4,6 +4,7 @@
  */
 package Logic.InferenceAlgoritms;
 
+import Models.Abstract.IPrintState;
 import generated.KnowledgeBases;
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
  *
  * @author admin
  */
-public abstract class AbstractInferenceAlgorithm {
+public abstract class AbstractInferenceAlgorithm implements IPrintState {
     
     protected IKBaseSupervisorDelegate _kBaseSupervisorDelegate;
     protected List<String> _desiredCells;
@@ -24,5 +25,10 @@ public abstract class AbstractInferenceAlgorithm {
     
     public void setDesiredCells(List<String> desiredCells){
         this._desiredCells = desiredCells;
+    }
+    
+    @Override
+    public void printCurrentState() {
+        this.writeLog("----- " + this.getClass().getName() + "(State) -----");
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Queue;
 /**
  *
  * @author admin
@@ -77,10 +78,16 @@ public class Graph<VertexType> extends GraphBasedObject<VertexType> {
     public void addEdge(VertexType vertex, VertexType neighbor)
     {
         int vertexIndex = this._vertices.indexOf(vertex);
-        int edgeIndex = this._edges.indexOf(neighbor);
+        int edgeIndex = this._vertices.indexOf(neighbor);
         
-        if (vertexIndex == -1) this._vertices.add(vertex);
-        if (edgeIndex == -1) this._vertices.add(neighbor);
+        if (vertexIndex == -1) {
+            this._vertices.add(vertex);
+            vertexIndex = this._vertices.indexOf(vertex);
+        }
+        if (edgeIndex == -1) {
+            this._vertices.add(neighbor);
+            edgeIndex = this._vertices.indexOf(neighbor);
+        }
         
         this.addEdge(vertexIndex, edgeIndex);
     }
@@ -273,9 +280,13 @@ public class Graph<VertexType> extends GraphBasedObject<VertexType> {
         return weight;
     }
     
-    public List<VertexType> getShortesPath(VertexType source, VertexType targget) {
+    public Queue<VertexType> getShortesPath(VertexType source, VertexType targget) {
+        if (this._algoritms == null) {
+            this._algoritms = new GraphPathAlgorithms(this);
+        }
         Map<String, List> routeMap = this._algoritms.dijstraAlgorithm(source);
-        List<VertexType> path = this._algoritms.rebuildShortesPathFromSourceToTarget(source, targget, routeMap.get(GraphPathAlgorithms.MIN_PATH_VERTICES_ARRAY));
+        Queue<VertexType> path = this._algoritms.rebuildShortesPathFromSourceToTarget(source, targget, routeMap.get(GraphPathAlgorithms.MIN_PATH_VERTICES_ARRAY));
+        path.add(targget);
         return path;
     }
 }

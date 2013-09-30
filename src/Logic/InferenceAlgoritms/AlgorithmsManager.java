@@ -10,10 +10,10 @@ package Logic.InferenceAlgoritms;
  */
 public class AlgorithmsManager {
     
-    private Class[] _algorithms;
+    private String[] _algorithms;
     private int _indexOfAlgorithm;
     
-    public AlgorithmsManager(Class[] algorithms) {
+    public AlgorithmsManager(String[] algorithms) {
         this._algorithms = algorithms;
         this._indexOfAlgorithm = 0;
     }
@@ -29,14 +29,15 @@ public class AlgorithmsManager {
     }
     
     public AbstractInferenceAlgorithm getFirstAlgorithm() throws ClassNotFoundException, InstantiationException, IllegalAccessException{
-        return this.getClassInstanceForName(this._algorithms[0].getName());
+        return this.getClassInstanceForName(this._algorithms[0]);
     }
     
     public AbstractInferenceAlgorithm changeCurrentAlgorithm() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        this._indexOfAlgorithm++;
         if (this._indexOfAlgorithm >= this._algorithms.length) {
             this._indexOfAlgorithm = 0;
         }
-        return this.getClassInstanceForName(this._algorithms[++this._indexOfAlgorithm].getName());
+        return this.getClassInstanceForName(this._algorithms[this._indexOfAlgorithm]);
     }
     
 }

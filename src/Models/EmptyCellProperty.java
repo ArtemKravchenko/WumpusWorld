@@ -4,16 +4,14 @@
  */
 package Models;
 
-import Models.Roles.Wumpus;
-import Models.Roles.Pit;
-import Models.Symptoms.Stench;
-import Models.Symptoms.Breeze;
-import Models.Symptoms.Glitter;
+import Models.Roles.Role;
+import Models.Symptoms.Symptom;
 import Models.Enums.AgentLifeState;
 import Logic.Helper;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  *
  * @author admin
@@ -31,16 +29,43 @@ public class EmptyCellProperty implements IBaseCellProperty {
     }
     
     @Override
-    public List<String> getSentences(int row, int col) {
+    public List<String> getPositiveSentences(int row, int col) {
         List sentences = new ArrayList<>();
         
-        sentences.add("!" + Helper.getEntityNameFromClass(Pit.class.getName()) + ":" + Helper.getStringFromRowAndCol(row, col));
-        sentences.add("!" + Helper.getEntityNameFromClass(Wumpus.class.getName())+ ":" + Helper.getStringFromRowAndCol(row, col));
-        sentences.add("!" + Helper.getEntityNameFromClass(Breeze.class.getName()) + ":" + Helper.getStringFromRowAndCol(row, col));
-        sentences.add("!" + Helper.getEntityNameFromClass(Stench.class.getName()) + ":" + Helper.getStringFromRowAndCol(row, col));
-        sentences.add("!" + Helper.getEntityNameFromClass(Gold.class.getName()) + ":" + Helper.getStringFromRowAndCol(row, col));
-        sentences.add("!" + Helper.getEntityNameFromClass(Glitter.class.getName()) + ":" + Helper.getStringFromRowAndCol(row, col));
+        String[] roles = Helper.getAllRoles();
+        String[] symptoms = Helper.getAllSymptoms();
+        
+        for (String role: roles) {
+            List<String> tmpSentences = null;
+            try {
+                tmpSentences = ((Role)Class.forName(role).newInstance()).getNegativeSentences(row, col);
+            } catch (    ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+                Logger.getLogger(EmptyCellProperty.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            for (String sentence: tmpSentences) {
+                sentences.add(sentence);
+            }
+        }
+        
+        for (String symptom: symptoms) {
+            List<String> tmpSentences = null;
+            try {
+                if (!symptom.equals(Helper.getEntityNameFromClass(Gold.class.getName()))) {
+                    tmpSentences = ((Symptom)Class.forName(symptom).newInstance()).getNegativeSentences(row, col);
+                }
+            } catch (    ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+                Logger.getLogger(EmptyCellProperty.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            for (String sentence: tmpSentences) {
+                sentences.add(sentence);
+            }
+        }
         
         return  sentences;
+    }
+
+    @Override
+    public List<String> getNegativeSentences(int row, int col) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

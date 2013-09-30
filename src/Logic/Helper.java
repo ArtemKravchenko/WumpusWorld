@@ -4,23 +4,21 @@
  */
 package Logic;
 
-import Models.Abstract.AbstractWorkSpaceCell;
+import Logic.InferenceAlgoritms.AbstractInferenceAlgorithm;
 import Models.BaseWorkSpaceCell;
-import Models.Symptoms.Breeze;
-import Models.Symptoms.Glitter;
-import Models.Gold;
-import Models.Roles.Pit;
-import Models.Symptoms.Stench;
-import Models.Roles.Wall;
-import Models.EmptyCellProperty;
 import Models.Enums.AgentAction;
 import Models.Enums.AgentMoveState;
-import Models.Roles.Wumpus;
+import Models.Roles.Role;
+import Models.Symptoms.Symptom;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
 /**
  *
@@ -38,8 +36,7 @@ public class Helper {
         String row = array[0].replace("[", "");
         String col = array[1].replace("]", "");
         
-        cell.setY(Integer.parseInt(row));
-        cell.setX(Integer.parseInt(col));
+        cell.setCurrentCell(Integer.parseInt(row), Integer.parseInt(col));
         
         return cell;
     }
@@ -58,11 +55,11 @@ public class Helper {
     }
     
     public static String getConjuction() {
-        return "(con)";
+        return "&";
     }
     
     public static String getDisjuction() {
-        return "(dis)";
+        return "|";
     }
     
     public static AgentMoveState getStateAfterAction(AgentAction action, AgentMoveState state) {
@@ -100,7 +97,12 @@ public class Helper {
             current == AgentMoveState.FaceUp && desired == AgentMoveState.FaceDown) {
             actionsList.add(AgentAction.TurnLeft);
             tmp = AgentMoveState.FaceLeft;
-        } else {
+        } else 
+        if (current == AgentMoveState.FaceLeft && desired == AgentMoveState.FaceRight ||
+            current == AgentMoveState.FaceRight && desired == AgentMoveState.FaceLeft) {
+            actionsList.add(AgentAction.TurnLeft);
+            tmp = AgentMoveState.FaceUp;
+        }  else {
             tmp = desired;
         }
         
@@ -139,5 +141,43 @@ public class Helper {
             }
         } 
         return null;
+    }
+    
+    private static String[] getAllClassesHeirs(Class c) {
+        Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forJavaClassPath()));
+        Set<Class<? extends AbstractInferenceAlgorithm>> allClasses = reflections.getSubTypesOf(c);
+  
+        String[] array = new String[allClasses.size()];
+        int i = 0;
+        for (Class cl: allClasses) {
+            array[i++] = cl.getName();
+        }
+        
+        return array;
+    }
+    
+    private static String[] _allSymptoms;
+    private static String[] _allRoles;
+    private static String[] _allAlgorithms;
+    
+    public static String[] getAllSymptoms() {
+        if (_allSymptoms == null) {
+            _allSymptoms = Helper.getAllClassesHeirs(Symptom.class);
+        }
+        return _allSymptoms;
+    }
+    
+    public static String[] getAllRoles() {
+        if (_allRoles == null) {
+            _allRoles = Helper.getAllClassesHeirs(Role.class);
+        }
+        return _allRoles;
+    }
+    
+    public static String[] getAllAlgorithms() {
+        if (_allAlgorithms == null) {
+            _allAlgorithms = Helper.getAllClassesHeirs(AbstractInferenceAlgorithm.class);
+        }
+        return _allAlgorithms;
     }
 }

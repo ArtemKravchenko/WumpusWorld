@@ -13,7 +13,7 @@ import generated.KnowledgeBases;
  *
  * @author admin
  */
-public abstract class AbstractAgent extends AbstractEntity {
+public abstract class AbstractAgent extends AbstractEntity implements IPrintState {
     
     protected ITarget _target;
     protected IAgentDelegate _delegate;
@@ -23,7 +23,10 @@ public abstract class AbstractAgent extends AbstractEntity {
     protected AlgorithmsManager _algoritmManager;
     
     public abstract void setDelegate(IAgentDelegate delegate);
-    public abstract void printCurrentState();
+    @Override
+    public void printCurrentState() {
+        this.writeLog("----- " + this.getClass().getName() + " (State) ----");
+    }
     public abstract void doNextStep(int stepCounter);
     protected abstract void writeToKBase(String sentence);
 }

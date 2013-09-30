@@ -7,24 +7,19 @@ package Models;
 import Logic.ActionManagment.IActionManager;
 import Logic.ActionManagment.SimpleActionManager;
 import Logic.Helper;
-import Logic.InferenceAlgoritms.AbstractInferenceAlgorithm;
 import Logic.InferenceAlgoritms.AlgorithmsManager;
 import Logic.InferenceAlgoritms.IKBaseSupervisorDelegate;
 import Logic.WumpusWorldGame;
 import Models.Enums.AgentMoveState;
 import Models.Enums.AgentAction;
 import Models.Abstract.AbstractAgent;
+import Models.Abstract.AbstractWorkSpaceCell;
 import Models.Abstract.IAgentDelegate;
 import Models.Enums.AgentLifeState;
-import Models.Symptoms.Symptom;
 import generated.KnowledgeBases;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.reflections.Reflections;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 /**
  *
@@ -41,6 +36,7 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         this._currentState = AgentMoveState.FaceRight;
         this._kBase = kBase;
         this._actionManager = manager;
+        this._arrow = true;
         try {
             // init algorithm
             this.initAlgorithm();
@@ -52,10 +48,9 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     // Init methods
     private void initAlgorithm() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forJavaClassPath()));
-        Set<Class<? extends AbstractInferenceAlgorithm>> allAlgoritms = reflections.getSubTypesOf(AbstractInferenceAlgorithm.class);
-  
-        this._algoritmManager = new AlgorithmsManager(allAlgoritms.toArray());
+        String[] array = Helper.getAllAlgorithms();
+
+        this._algoritmManager = new AlgorithmsManager(array);
         this._inferenceAlgorithm = this._algoritmManager.getFirstAlgorithm();
         this._inferenceAlgorithm.setKBaseSupervisorDelegate((Logic.InferenceAlgoritms.IKBaseSupervisorDelegate) this);
     }
@@ -75,13 +70,13 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
             this._delegate.targetWasReached(this._target);
         } else if (action == AgentAction.MoveForward) {
             if (this._currentState == AgentMoveState.FaceDown) {
-                this._cell.setY(this._cell.getY() - 1);
+                this._delegate.setAgentCell(this._cell.getY() - 1, this._cell.getX());
             } else if (this._currentState == AgentMoveState.FaceLeft) {
-                this._cell.setX(this._cell.getX() - 1);
+                this._delegate.setAgentCell(this._cell.getY(), this._cell.getX() - 1);
             } else if (this._currentState == AgentMoveState.FaceRight) {
-                this._cell.setX(this._cell.getX() + 1);
+                this._delegate.setAgentCell(this._cell.getY(), this._cell.getX() + 1);
             } else {
-                this._cell.setY(this._cell.getY() + 1);
+                this._delegate.setAgentCell(this._cell.getY() + 1, this._cell.getX());
             }
         } else if (action == AgentAction.Shoot) {
             this._arrow = false;
@@ -94,13 +89,13 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     // Logic
     public void tellKBasePercept(BaseWorkSpaceCell cell) {
         for (IBaseCellProperty property : cell.getProperties()) {
-            List<String> sentences = property.getSentences(cell.getY(), cell.getX());
+            List<String> sentences = property.getPositiveSentences(cell.getY(), cell.getX());
             for (String sentence : sentences) {
                 this.writeToKBase(sentence);
             }
         }
     }
-
+    
     @Override
     public void doNextStep(int stepCounter) {
         for (IBaseCellProperty property : ((BaseWorkSpaceCell)this._cell).getProperties()) {
@@ -112,13 +107,12 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         }
         // First Step: Take percept from current cell and Tell KBase about percept
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
-        // Generate all possible inferenc
-        this._inferenceAlgorithm.setDesiredCells((List<String>) this._actionManager.getDesiredCells().keySet());
-        this._inferenceAlgorithm.execute(this._kBase);
+        if (this._actionManager.queueIsEmpty()) {
+            // Generate all possible inferenc
+            this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
+            this._inferenceAlgorithm.execute(this._kBase);
+        }
         // Second Step: Ask KBase, what is the next action
-        ((SimpleActionManager)this._actionManager).setCurrentCell(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
-        ((SimpleActionManager)this._actionManager).setAgentMoveState(this._currentState);
-        this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
         AgentAction nextAction = this._actionManager.getNextAction(this._kBase);
         // Third Step: Make the current action
         this.makeAction(nextAction);
@@ -127,6 +121,7 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     }
     
+    @Override
     public final void writeLog(String log) {
         System.out.println(log);
         // TODO
@@ -134,8 +129,21 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     @Override
     public void printCurrentState() {
+        super.printCurrentState();
+        if (this._arrow) { 
+            this.writeLog("Agent contain arrow");
+        } else {
+            this.writeLog("Agent do not contain arrow");
+        }
+        this.writeLog("Current cell             : " + this._cell.toString());
+        this.writeLog("Current move state       : " + this._currentState);
+        this.writeLog("Knowledge Base           : " + this._kBase.getSentences().size());
+        for (String sentence: this._kBase.getSentences()) {
+            this.writeLog(sentence);
+        }
+        this._actionManager.printCurrentState();
+        this._inferenceAlgorithm.printCurrentState();
     }
-
     // Overrides methods
     @Override
     public void setDelegate(IAgentDelegate delegate) {
@@ -153,19 +161,18 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     }
 
     @Override
-    public void setX(int x) {
-        this._cell.setX(x);
-    }
-
-    @Override
-    public void setY(int y) {
-        this._cell.setY(y);
+    public void setCurrentCell(AbstractWorkSpaceCell cell) {
+        this._cell = cell;
+        ((SimpleActionManager)this._actionManager).setCurrentCell(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
+        ((SimpleActionManager)this._actionManager).setAgentMoveState(this._currentState);
+        this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
     }
 
     @Override
     public void kBaseDidNotChange() {
         try {
             this._inferenceAlgorithm = this._algoritmManager.changeCurrentAlgorithm();
+            this._inferenceAlgorithm.setKBaseSupervisorDelegate((Logic.InferenceAlgoritms.IKBaseSupervisorDelegate) this);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
             Logger.getLogger(WumpusWorldGame.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -173,7 +180,11 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     @Override
     protected void writeToKBase(String sentence) {
-        this._kBase.addSentence(sentence);
-        this.writeLog("The sentence '" + sentence + "' was added to Knowledge Base");
+        if (!this._kBase.getSentences().contains(sentence)) {
+            this._kBase.addSentence(sentence);
+            this.writeLog("The sentence '" + sentence + "' was added to Knowledge Base");
+        } else {
+            this.writeLog("The sentence '" + sentence + "' already contains");
+        }
     }
 }
