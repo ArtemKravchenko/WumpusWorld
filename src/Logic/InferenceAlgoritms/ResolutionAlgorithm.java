@@ -86,7 +86,6 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
             return false;
         }
         */
-        
         // Second method
         clauses.add(notAlfa);
         Set<String> newSentences = new HashSet<>();
@@ -99,6 +98,18 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
                 for (int j = 0; j < restClauses.size(); j++) {
                     String nextClause = restClauses.get(j);
                     Set<String> resolvents = this.resolve(currentClause, nextClause);
+                    if (resolvents.size() == 1) {
+                        this.writeLog("");
+                    }
+                    if (resolvents.size() == 2) {
+                        this.writeLog("");
+                    }
+                    if (resolvents.size() == 3) {
+                        this.writeLog("");
+                    }
+                    if (resolvents.size() > 3) {
+                        this.writeLog("");
+                    }
                     if (resolvents.contains("")) return true;
                     newSentences.addAll(resolvents);
                 }
@@ -124,11 +135,11 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
         return resolvents;
     }
     
-    private Set<String> resolveEachWithOne(Set<String> clauses, String alfa) {
+    private Set<String> resolveEachWithOne(Set<String> clauses, String notAlfa) {
         Set<String> resolvents = new HashSet<>();
         
         for (String clause: clauses) {
-            Set<String> resolve = this.resolve(clause, alfa);
+            Set<String> resolve = this.resolve(clause, notAlfa);
             resolvents.addAll(resolve);
         }
         
@@ -137,18 +148,39 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
     
     private Set<String> resolve(String clause1, String clause2) {
         Set<String> resolutions = new HashSet<>();
+        String clause = null;
+        
         
         String[] literalsOfFirstClause = clause1.split("\\" + Helper.getDisjuction());
         String[] literalsOfSecondClause = clause2.split("\\" + Helper.getDisjuction());
         
-        for (int i = 0; i < literalsOfFirstClause.length; i++) {
-            for (int j = 0; j < literalsOfSecondClause.length; j++) {
-                if (literalsOfFirstClause[i].equals("!" + literalsOfSecondClause[j]) || 
-                    literalsOfSecondClause[j].equals("!" + literalsOfFirstClause[i])) {
-                    resolutions.add("");
-                } else {
-                    resolutions.add(literalsOfFirstClause[i] + Helper.getDisjuction()+ literalsOfSecondClause);
+        if (literalsOfSecondClause.length == 1) {
+            for (int i = 0; i < literalsOfSecondClause.length; i++) {
+                clause = new String(clause1);
+                for (int j = 0; j < literalsOfFirstClause.length; j++) {
+                    if (literalsOfFirstClause[j].equals("!" + literalsOfSecondClause[i]) || 
+                        literalsOfSecondClause[i].equals("!" + literalsOfFirstClause[j])) {
+                        clause.replace(literalsOfSecondClause[i], "");
+                    } 
                 }
+                if (clause.equals(clause1)) {
+                    clause += Helper.getDisjuction() + literalsOfSecondClause[i];
+                }
+                resolutions.add(clause);
+            }
+        } else {
+            for (int i = 0; i < literalsOfFirstClause.length; i++) {
+                clause = new String(clause2);
+                for (int j = 0; j < literalsOfSecondClause.length; j++) {
+                    if (literalsOfFirstClause[i].equals("!" + literalsOfSecondClause[j]) || 
+                        literalsOfSecondClause[j].equals("!" + literalsOfFirstClause[i])) {
+                        clause.replace(literalsOfSecondClause[j], "");
+                    } 
+                }
+                if (clause.equals(clause2)) {
+                    clause += Helper.getDisjuction() + literalsOfFirstClause[i];
+                }
+                resolutions.add(clause);
             }
         }
         
@@ -164,18 +196,19 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
             currentClause = sentence;
             if (currentClause.contains("<=>")) {
                 currentClause = this.eliminateBiconditional(currentClause);
-            } 
-            if (currentClause.contains("=>")) {
-                currentClause = this.eliminateImplication(currentClause);
-            }
-            if (currentClause.contains("!(")) {
-                currentClause = this.openBracketsWithNegation(currentClause);
-            }
-            if (currentClause.contains("!!")) {
-                currentClause = this.eliminateDoubleNegatiation(currentClause);
-            }
-            if (currentClause.contains(Helper.getDisjuction()) && currentClause.contains(Helper.getConjuction())) {
-                currentClause = this.openBracketsWithDistributivityCon(currentClause);
+            } else {
+                if (currentClause.contains("=>")) {
+                    currentClause = this.eliminateImplication(currentClause);
+                }
+                if (currentClause.contains("!(")) {
+                    currentClause = this.openBracketsWithNegation(currentClause);
+                }
+                if (currentClause.contains("!!")) {
+                    currentClause = this.eliminateDoubleNegatiation(currentClause);
+                }
+                if (currentClause.contains(Helper.getDisjuction()) && currentClause.contains(Helper.getConjuction())) {
+                    currentClause = this.openBracketsWithDistributivityCon(currentClause);
+                }
             }
             if (currentClause.contains(Helper.getConjuction())) {
                 String[] array = currentClause.split("\\" + Helper.getConjuction());
@@ -195,8 +228,28 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
     private String eliminateBiconditional(String clause) {
         this.writeLog("Eliminate biconditional for sentence: " + clause);
         String[] array = clause.split("\\<=>");
-        String newClause = array[0] + "=>" + array[1] + Helper.getConjuction()+ array[1] + "=>" + array[0];
+        String newClause = "(" + array[0] + "=>" + array[1] + ")" + Helper.getConjuction() + "(" + array[1] + "=>" + array[0] + ")";
         this.writeLog("Receive : " + newClause);
+        
+        String firstClause = this.eliminateImplication(array[0] + "=>" + array[1]);
+        String secondClause = this.eliminateImplication(array[1] + "=>" + array[0]);
+        
+        if (firstClause.contains("!!")) {
+            firstClause = this.eliminateDoubleNegatiation(firstClause);
+        }
+        if (secondClause.contains("!!")) {
+            secondClause = this.eliminateDoubleNegatiation(secondClause);
+        }
+        
+        if (firstClause.contains(Helper.getDisjuction()) && firstClause.contains(Helper.getConjuction())) {
+            firstClause = this.openBracketsWithDistributivityCon(firstClause);
+        }
+        if (secondClause.contains(Helper.getDisjuction()) && secondClause.contains(Helper.getConjuction())) {
+            secondClause = this.openBracketsWithDistributivityCon(secondClause);
+        }
+        
+        newClause = firstClause + Helper.getConjuction() + secondClause;
+        
         return newClause;
     }
     
@@ -212,8 +265,16 @@ public class ResolutionAlgorithm extends AbstractInferenceAlgorithm {
     private String openBracketsWithDistributivityCon(String clause) {
         this.writeLog("Open bracket with distributive conjuction for sentence: " + clause);
         String[] array = clause.split("\\" + Helper.getDisjuction());
-        String[] array2 = array[1].replace("(", "").replace(")", "").split("\\" + Helper.getConjuction());
-        String newClause = array[0] + Helper.getDisjuction()+ array2[0] + Helper.getConjuction() + array[0] + Helper.getDisjuction()+ array2[1];
+        String[] array2 = null;
+        String newClause = null;
+        if (array[1].contains(Helper.getConjuction())) {
+            array2 = array[1].replace("(", "").replace(")", "").split("\\" + Helper.getConjuction());
+            newClause = array[0] + Helper.getDisjuction()+ array2[0] + Helper.getConjuction() + array[0] + Helper.getDisjuction()+ array2[1];
+        }
+        if (array[0].contains(Helper.getConjuction())) {
+            array2 = array[0].replace("(", "").replace(")", "").split("\\" + Helper.getConjuction());
+            newClause = array[1] + Helper.getDisjuction()+ array2[0] + Helper.getConjuction() + array[1] + Helper.getDisjuction()+ array2[1];
+        }
         this.writeLog("Receive : " + newClause);
         return newClause;
     }

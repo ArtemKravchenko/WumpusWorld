@@ -16,7 +16,12 @@ import Models.Abstract.AbstractAgent;
 import Models.Abstract.AbstractWorkSpaceCell;
 import Models.Abstract.IAgentDelegate;
 import Models.Enums.AgentLifeState;
+import Models.Roles.Role;
+import Models.Symptoms.Symptom;
+import com.google.common.collect.Lists;
 import generated.KnowledgeBases;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,10 +93,43 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
 
     // Logic
     public void tellKBasePercept(BaseWorkSpaceCell cell) {
+        List<String> symptoms = new ArrayList<>(Arrays.asList(Helper.getAllSymptoms()));
+        List<String> roles = new ArrayList<>(Arrays.asList(Helper.getAllRoles()));
+  
         for (IBaseCellProperty property : cell.getProperties()) {
+            String propertyString = property.getClass().toString().replace("class ", "");
+            if (symptoms.contains(propertyString)) {
+                symptoms.remove(propertyString);
+            }
+            if (roles.contains(propertyString)) {
+                roles.remove(propertyString);
+            }
             List<String> sentences = property.getPositiveSentences(cell.getY(), cell.getX());
             for (String sentence : sentences) {
                 this.writeToKBase(sentence);
+            }
+        }
+        for (String symptom: symptoms) {
+            try {
+                Symptom cs = (Symptom) Class.forName(symptom).newInstance();
+                List<String> anotherSentences =  cs.getNegativeSentences(cell.getY(), cell.getX());
+                for (String sentence: anotherSentences) {
+                    this.writeToKBase(sentence);
+                }
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+                Logger.getLogger(Symptom.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        
+        for (String role: roles) {
+            try {
+                Role cr = (Role) Class.forName(role).newInstance();
+                List<String> anotherSentences =  cr.getNegativeSentences(cell.getY(), cell.getX());
+                for (String sentence: anotherSentences) {
+                    this.writeToKBase(sentence);
+                }
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+                Logger.getLogger(Symptom.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -109,8 +147,8 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
         if (this._actionManager.queueIsEmpty()) {
             // Generate all possible inferenc
-            this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
-            this._inferenceAlgorithm.execute(this._kBase);
+            //this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
+            //this._inferenceAlgorithm.execute(this._kBase);
         }
         // Second Step: Ask KBase, what is the next action
         AgentAction nextAction = this._actionManager.getNextAction(this._kBase);

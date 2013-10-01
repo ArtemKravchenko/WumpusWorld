@@ -31,7 +31,7 @@ public class EmptyCellProperty implements IBaseCellProperty {
     @Override
     public List<String> getPositiveSentences(int row, int col) {
         List sentences = new ArrayList<>();
-        
+        /*
         String[] roles = Helper.getAllRoles();
         String[] symptoms = Helper.getAllSymptoms();
         
@@ -60,7 +60,7 @@ public class EmptyCellProperty implements IBaseCellProperty {
                 sentences.add(sentence);
             }
         }
-        
+        */
         return  sentences;
     }
 
