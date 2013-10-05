@@ -34,11 +34,13 @@ public class SimpleActionManager implements IActionManager {
     private Graph<String> _workSpaceGraph;
     private String _currentCell;
     private AgentMoveState _currentMoveState;
+    private Integer _lastKBaseIndex;
     
     public SimpleActionManager() {
         this._actionQueue = new ArrayDeque<>();
         this._visitedcCells = new ArrayList<>();
         this._desiredCells = new HashMap<>();
+        this._lastKBaseIndex = 0;
     }
     
     @Override
@@ -176,7 +178,8 @@ public class SimpleActionManager implements IActionManager {
         return keyOfMaximalCounter;
     }
     
-    private void evaluateCounterOfDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {        
+    private void evaluateCounterOfDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {         
+        /*
         for (String sentence: sentences) {
             if (!sentence.contains("=>")) {
                 this.evaluateSentence(sentence);
@@ -189,6 +192,12 @@ public class SimpleActionManager implements IActionManager {
                         this.evaluateSentence(literal);
                     }
                 }
+            }
+        }
+        */
+        for (int i = _lastKBaseIndex; i < sentences.size(); i++, _lastKBaseIndex++) {
+            if (!sentences.get(i).contains("=>")) {
+                this.evaluateSentence(sentences.get(i));
             }
         }
     } 

@@ -37,7 +37,11 @@ public class AlgorithmsManager {
         if (this._indexOfAlgorithm >= this._algorithms.length) {
             this._indexOfAlgorithm = 0;
         }
-        return this.getClassInstanceForName(this._algorithms[this._indexOfAlgorithm]);
+        AbstractInferenceAlgorithm algorithm = this.getClassInstanceForName(this._algorithms[this._indexOfAlgorithm]);
+        if (algorithm.getClass().isInstance(ResolutionAlgorithm.class)) {
+            return changeCurrentAlgorithm();
+        }
+        return algorithm;
     }
     
 }

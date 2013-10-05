@@ -38,7 +38,7 @@ public class Symptom implements IBaseCellProperty {
         sentence = "";
         
         sentence += Helper.getEntityNameFromClass(this.getClass().getName()) + ":" + Helper.getStringFromRowAndCol(row, col);
-        sentence += "<=>";
+        sentence += "=>";
         
         int rightCell = col + 1;
         int upCell = row + 1;
@@ -72,7 +72,7 @@ public class Symptom implements IBaseCellProperty {
         }
    
         if (counter == 1) {
-            String[] array = sentence.split("<=>");
+            String[] array = sentence.split("\\=>");
             sentences.add(array[1]);
         } else {
             sentences.add(sentence);    

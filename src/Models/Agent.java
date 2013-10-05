@@ -18,7 +18,6 @@ import Models.Abstract.IAgentDelegate;
 import Models.Enums.AgentLifeState;
 import Models.Roles.Role;
 import Models.Symptoms.Symptom;
-import com.google.common.collect.Lists;
 import generated.KnowledgeBases;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,8 +146,7 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
         if (this._actionManager.queueIsEmpty()) {
             // Generate all possible inferenc
-            //this._inferenceAlgorithm.setDesiredCells(this._actionManager.getDesiredCells());
-            //this._inferenceAlgorithm.execute(this._kBase);
+            this._inferenceAlgorithm.execute(this._kBase);
         }
         // Second Step: Ask KBase, what is the next action
         AgentAction nextAction = this._actionManager.getNextAction(this._kBase);
