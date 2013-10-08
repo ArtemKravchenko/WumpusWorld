@@ -6,6 +6,7 @@ package Logic;
 
 import Models.Abstract.AbstractAgent;
 import Models.Abstract.AbstractEnviropment;
+import Models.Abstract.AbstractWorkSpaceCell;
 import Models.Abstract.IAgentDelegate;
 import Models.Abstract.ITarget;
 import Models.Agent;
@@ -48,7 +49,7 @@ public class WumpusWorldGame extends AbstractEnviropment {
     }
     
     public void simulateGame(){
-        while (!this._goldWasFound || !this._agentWasKilled) {
+        while (!this._goldWasFound && !this._agentWasKilled) {
             this.doNextStep();
         }
         if (this._goldWasFound) {
@@ -74,12 +75,12 @@ public class WumpusWorldGame extends AbstractEnviropment {
     }
 
     @Override
-    public void agentWasKilled(AbstractAgent agent) {
+    public void agentWasKilled(AbstractWorkSpaceCell cell) {
         this._agentWasKilled = true;
     }
 
     @Override
-    public void targetWasReached(ITarget target) {
+    public void targetWasReached(AbstractWorkSpaceCell cell) {
         this._goldWasFound = true;
     }
 

@@ -93,31 +93,37 @@ public class Helper {
         List<AgentAction> actionsList = new ArrayList<>();
         AgentMoveState tmp;
         
-        if (current == AgentMoveState.FaceDown && desired == AgentMoveState.FaceUp ||
-            current == AgentMoveState.FaceUp && desired == AgentMoveState.FaceDown) {
+        if (current == AgentMoveState.FaceDown && desired == AgentMoveState.FaceUp) {
+            actionsList.add(AgentAction.TurnLeft);
+            tmp = AgentMoveState.FaceRight;
+        } else
+        if (current == AgentMoveState.FaceUp && desired == AgentMoveState.FaceDown) {
             actionsList.add(AgentAction.TurnLeft);
             tmp = AgentMoveState.FaceLeft;
         } else 
-        if (current == AgentMoveState.FaceLeft && desired == AgentMoveState.FaceRight ||
-            current == AgentMoveState.FaceRight && desired == AgentMoveState.FaceLeft) {
+        if (current == AgentMoveState.FaceLeft && desired == AgentMoveState.FaceRight ) {
+            actionsList.add(AgentAction.TurnLeft);
+            tmp = AgentMoveState.FaceDown;
+        } else
+        if (current == AgentMoveState.FaceRight && desired == AgentMoveState.FaceLeft) {
             actionsList.add(AgentAction.TurnLeft);
             tmp = AgentMoveState.FaceUp;
-        }  else {
-            tmp = desired;
+        } else {
+            tmp = current;
         }
         
-        if (current == AgentMoveState.FaceDown && tmp == AgentMoveState.FaceLeft ||
-            current == AgentMoveState.FaceLeft && tmp == AgentMoveState.FaceUp   || 
-            current == AgentMoveState.FaceUp && tmp == AgentMoveState.FaceRight    ||
-            current == AgentMoveState.FaceRight && tmp == AgentMoveState.FaceDown) {
-            actionsList.add(AgentAction.TurnRight);
-        }
-        
-        if (current == AgentMoveState.FaceDown && tmp == AgentMoveState.FaceRight ||
-            current == AgentMoveState.FaceRight && tmp == AgentMoveState.FaceUp   || 
-            current == AgentMoveState.FaceUp && tmp == AgentMoveState.FaceLeft    ||
-            current == AgentMoveState.FaceLeft && tmp == AgentMoveState.FaceDown) {
+        if (desired == AgentMoveState.FaceDown && tmp == AgentMoveState.FaceLeft ||
+            desired == AgentMoveState.FaceLeft && tmp == AgentMoveState.FaceUp   || 
+            desired == AgentMoveState.FaceUp && tmp == AgentMoveState.FaceRight    ||
+            desired == AgentMoveState.FaceRight && tmp == AgentMoveState.FaceDown) {
             actionsList.add(AgentAction.TurnLeft);
+        }
+        
+        if (desired == AgentMoveState.FaceDown && tmp == AgentMoveState.FaceRight ||
+            desired == AgentMoveState.FaceRight && tmp == AgentMoveState.FaceUp   || 
+            desired == AgentMoveState.FaceUp && tmp == AgentMoveState.FaceLeft    ||
+            desired == AgentMoveState.FaceLeft && tmp == AgentMoveState.FaceDown) {
+            actionsList.add(AgentAction.TurnRight);
         } 
         
         return actionsList;

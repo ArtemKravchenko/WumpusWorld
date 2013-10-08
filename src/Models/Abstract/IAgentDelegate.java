@@ -10,7 +10,7 @@ package Models.Abstract;
  */
 public interface IAgentDelegate {
     
-    public void agentWasKilled(AbstractAgent agent); 
-    public void targetWasReached(ITarget target);
+    public void agentWasKilled(AbstractWorkSpaceCell cell); 
+    public void targetWasReached(AbstractWorkSpaceCell cell);
     public void setAgentCell(int y, int x);
 }

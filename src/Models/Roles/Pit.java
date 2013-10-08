@@ -15,7 +15,7 @@ public class Pit extends Role {
     }
     
     public static int weight () {
-        return -2000;
+        return -15000;
     }
     
 }

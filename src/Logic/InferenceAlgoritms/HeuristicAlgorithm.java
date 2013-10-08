@@ -27,7 +27,7 @@ public class HeuristicAlgorithm extends AbstractInferenceAlgorithm {
         List<String> moreThenOneSymbolSentences = new ArrayList<>();
         
         for (String sentence : kBaseSentences) {
-            if (sentence.split("\\" + Helper.getDisjuction()).length != 0 || sentence.split("\\" + Helper.getConjuction()).length != 0) {
+            if (sentence.contains(Helper.getDisjuction()) || sentence.contains(Helper.getConjuction())) {
                 moreThenOneSymbolSentences.add(sentence);
             } else {
                 singleSymbolSentences.add(sentence);
@@ -46,10 +46,10 @@ public class HeuristicAlgorithm extends AbstractInferenceAlgorithm {
                     }
                 }
                 List<String> symbols = new ArrayList<>(Arrays.asList(array[1].split("\\" + Helper.getDisjuction())));
-                List<String> alreadyExist = new ArrayList<String>(); 
+                List<String> alreadyExist = new ArrayList<>(); 
                 for (String oneSymbolSentence : singleSymbolSentences) {
                     for (String symbol : symbols) {
-                        if (symbol.equals("!" + oneSymbolSentence)) {
+                        if (oneSymbolSentence.equals("!" + symbol)) {
                             alreadyExist.add(symbol);
                         }
                     }
@@ -59,7 +59,12 @@ public class HeuristicAlgorithm extends AbstractInferenceAlgorithm {
                         symbols.remove(symbol);
                     }
                     if (symbols.size() == 1) {
-                        kBase.addSentence(symbols.get(0));
+                        if (!kBase.getSentences().contains(symbols.get(0))) {
+                            kBase.addSentence(symbols.get(0));
+                            this.writeLog("The sentence '" + symbols.get(0) + "' was added to Knowledge Base");
+                        } else {
+                            this.writeLog("The sentence '" + symbols.get(0) + "' already contains");
+                        }
                     }
                 }
             }

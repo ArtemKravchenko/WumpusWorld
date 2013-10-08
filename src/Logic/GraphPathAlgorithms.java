@@ -96,7 +96,7 @@ public class GraphPathAlgorithms<VertexType> {
                     if (alt < distanceArray.get(indexOfNeighbor)) {
                         distanceArray.set(indexOfNeighbor, alt);
                         previousArray.set(indexOfNeighbor, u);
-                        vertices.remove(neighbor);
+                        //vertices.remove(neighbor);
                     }
                 }
             }
@@ -114,23 +114,24 @@ public class GraphPathAlgorithms<VertexType> {
         int indexWithMinValue = 0;
         
         for (int i = 0; i < array.size(); i++) {
-            int indexOfVertex = ((List<VertexType>)this._graph.getVertices()).indexOf(i);
-            double distance = distanceArray.get(i);
+            int indexOfVertex = ((List<VertexType>)this._graph.getVertices()).indexOf((VertexType)array.get(i));
+            double distance = distanceArray.get(indexOfVertex);
             if (distance < minValue) {
                 minValue = distance;
-                indexWithMinValue = i;
+                indexWithMinValue = indexOfVertex;
             }
         }
         
         return ((List<VertexType>)this._graph.getVertices()).get(indexWithMinValue);
     }
     
-    public Queue<VertexType> rebuildShortesPathFromSourceToTarget(VertexType source, VertexType target, List<VertexType> previousArray) {
-        Queue sequence = new ArrayDeque();
+    public List<VertexType> rebuildShortesPathFromSourceToTarget(VertexType source, VertexType target, List<VertexType> previousArray) {
+        List sequence = new ArrayList<>();
         List<VertexType> vertices = this._graph.getVertices();
         
         int indexOfTarget = vertices.indexOf(target);
         VertexType previousForTarget = previousArray.get(indexOfTarget);
+        sequence.add(target);
         while (previousForTarget != null) {
             sequence.add(previousForTarget);
             indexOfTarget = vertices.indexOf(previousForTarget);

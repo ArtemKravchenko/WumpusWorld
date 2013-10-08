@@ -73,7 +73,7 @@ public class SimpleActionManager implements IActionManager {
         this.evaluateCounterOfDesiredCells(sentences);
         
         // Set target cell
-        String keyOfMaximalCounter = this.getKeyWithMaximalValue();
+        String keyOfMaximalCounter = this.getKeyWithMaximalValue(kBase.getSentences());
         if (!keyOfMaximalCounter.equals("")) {
             // Set target cell
             this.setTargetCell(keyOfMaximalCounter);
@@ -89,16 +89,18 @@ public class SimpleActionManager implements IActionManager {
         // Prepeare work space graph for searching
         this.updateGraphWithVisitedCells();
         // Find shortes path to target cell
-        Queue<String> shortestPath = this._workSpaceGraph.getShortesPath(this._currentCell, this._targetCell);
+        List<String> shortestPath = this._workSpaceGraph.getShortesPath(this._currentCell, this._targetCell);
         // Fill action queue correspond for path
         this.fillQueueOfActionsBasedOnPath(shortestPath);
     }
     
-    private void fillQueueOfActionsBasedOnPath(Queue<String> path) {
+    private void fillQueueOfActionsBasedOnPath(List<String> path) {
         String current = this._currentCell;
         String next = null;
+        path.remove(path.size() - 1);
         while(!path.isEmpty()) {
-            next = path.poll();
+            next = path.get(path.size() - 1);
+            path.remove(path.size() - 1);
             if (!next.equals(this._currentCell)) {
                 List<AgentAction> actions = this.getListOfActionsToNeighbor(current, next);
                 for (AgentAction action: actions) {
@@ -165,36 +167,59 @@ public class SimpleActionManager implements IActionManager {
         }
     }
     
-    private String getKeyWithMaximalValue() {
-        String keyOfMaximalCounter = "";
+    private String getKeyWithMaximalValue(List<String> kBaseSentences) {
+        // First level of evaluation
+        List<String> keys = this.baseEvaluateKeysWithMaximalValue();
+        if (keys.size() > 1) {
+            this.reevaluateKeysWithAccessotuToDisjuctioin(keys, kBaseSentences);
+        } else {
+            return keys.get(0);
+        }
+        
+        // Second level of evaluatuion
+        keys = this.baseEvaluateKeysWithMaximalValue();
+        if (keys.size() > 1) {
+            this.reevaluateKeysWithNerestNeighbor(keys, kBaseSentences);
+        } else {
+            return keys.get(0);
+        }
+        
+        return keys.get(0);
+    }
+    
+    private List<String> baseEvaluateKeysWithMaximalValue() {
+        List<String> keys = new ArrayList<>();
         int max = 0;
         for (String key: this._desiredCells.keySet()) {
             if (this._desiredCells.get(key) > max) {
                 max = this._desiredCells.get(key);
-                keyOfMaximalCounter = key;
             }
         }
-        
-        return keyOfMaximalCounter;
+        for (String key: this._desiredCells.keySet()) {
+            if (this._desiredCells.get(key) == max) {
+                keys.add(key);
+            }
+        }
+        return keys;
     }
     
-    private void evaluateCounterOfDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {         
-        /*
-        for (String sentence: sentences) {
-            if (!sentence.contains("=>")) {
-                this.evaluateSentence(sentence);
-            } else {
-                String[] array = sentence.split("\\=>");
-                String rightSide = array[1];
-                String[] literals = rightSide.split("\\" + Helper.getConjuction());
-                if (literals.length > 1) {
-                    for (String literal: literals) {
-                        this.evaluateSentence(literal);
+    private void reevaluateKeysWithAccessotuToDisjuctioin(List<String> keys, List<String> kBaseSentences) {
+            for (String key : keys) {
+                for (String sentence : kBaseSentences) {
+                    if (sentence.contains("=>") && sentence.contains(key)) {
+                        int counter = this._desiredCells.get(key);
+                        counter -= 50;
+                        this._desiredCells.put(key, counter);
                     }
                 }
             }
-        }
-        */
+    }
+    
+    private void reevaluateKeysWithNerestNeighbor(List<String> keys, List<String> kBaseSentences) {
+        
+    }
+    
+    private void evaluateCounterOfDesiredCells(List<String> sentences) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {         
         for (int i = _lastKBaseIndex; i < sentences.size(); i++, _lastKBaseIndex++) {
             if (!sentences.get(i).contains("=>")) {
                 this.evaluateSentence(sentences.get(i));
@@ -221,8 +246,19 @@ public class SimpleActionManager implements IActionManager {
             String tmpLiteral = literal.replace("!", "");
             tmpLiteral = this.getFullClassName(tmpLiteral);
             Class<IBaseCellProperty> c = (Class<IBaseCellProperty>) Class.forName(tmpLiteral);
-            Method method = (!literal.contains("!")) ? c.getMethod("weight", (Class<?>) null): c.getMethod("antiWeight", (Class<?>[])null);
-            counter += (int) method.invoke((Object) null);
+            Method method = null;
+            try {
+                if (!literal.contains("!")) {
+                    method = c.getMethod("weight", (Class<?>[]) null);
+                } else {
+                    method = c.getMethod("antiWeight", (Class<?>[])null);
+                }
+            } catch (Exception ex) {
+                this.writeLog(ex.getMessage());
+            }
+            
+            int newValue = (int) method.invoke((Object) null);
+            counter += newValue;
             this._desiredCells.put(position, counter);
         }
     }
@@ -286,7 +322,7 @@ public class SimpleActionManager implements IActionManager {
     
     public void setCurrentCell(String cell) {
         this._currentCell = cell;
-        this._visitedcCells.add(cell);
+        this.addToVisitedCells(cell);
         this._desiredCells.remove(cell);
         this.updateDesiredCells();
     }

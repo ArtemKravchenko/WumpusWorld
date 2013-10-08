@@ -224,10 +224,13 @@ public class Graph<VertexType> extends GraphBasedObject<VertexType> {
     {
         List<VertexType> neighborhood = new ArrayList<>();
         int vertexIndex = _vertices.indexOf(vertex);
-
-        for (Integer edge : this._edges.get(vertexIndex)) {
-            neighborhood.add(_vertices.get(edge));
+        
+        if (this._edges.size() > vertexIndex) { 
+            for (Integer edge : this._edges.get(vertexIndex)) {
+                neighborhood.add(_vertices.get(edge));
+            }
         }
+        
 
         return neighborhood;
     }
@@ -280,13 +283,13 @@ public class Graph<VertexType> extends GraphBasedObject<VertexType> {
         return weight;
     }
     
-    public Queue<VertexType> getShortesPath(VertexType source, VertexType targget) {
+    public List<VertexType> getShortesPath(VertexType source, VertexType targget) {
         if (this._algoritms == null) {
             this._algoritms = new GraphPathAlgorithms(this);
         }
         Map<String, List> routeMap = this._algoritms.dijstraAlgorithm(source);
-        Queue<VertexType> path = this._algoritms.rebuildShortesPathFromSourceToTarget(source, targget, routeMap.get(GraphPathAlgorithms.MIN_PATH_VERTICES_ARRAY));
-        path.add(targget);
+        List<VertexType> path = this._algoritms.rebuildShortesPathFromSourceToTarget(source, targget, routeMap.get(GraphPathAlgorithms.MIN_PATH_VERTICES_ARRAY));
+        //path.add(targget);
         return path;
     }
 }

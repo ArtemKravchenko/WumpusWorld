@@ -15,6 +15,7 @@ import Models.Enums.AgentAction;
 import Models.Abstract.AbstractAgent;
 import Models.Abstract.AbstractWorkSpaceCell;
 import Models.Abstract.IAgentDelegate;
+import Models.Abstract.ITarget;
 import Models.Enums.AgentLifeState;
 import Models.Roles.Role;
 import Models.Symptoms.Symptom;
@@ -71,7 +72,7 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     public void makeAction(AgentAction action) {
         
         if (action == AgentAction.Grap) {
-            this._delegate.targetWasReached(this._target);
+            this._delegate.targetWasReached(this._cell);
         } else if (action == AgentAction.MoveForward) {
             if (this._currentState == AgentMoveState.FaceDown) {
                 this._delegate.setAgentCell(this._cell.getY() - 1, this._cell.getX());
@@ -137,13 +138,21 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     public void doNextStep(int stepCounter) {
         for (IBaseCellProperty property : ((BaseWorkSpaceCell)this._cell).getProperties()) {
             if (property.getLifeState() == AgentLifeState.Dead) {
-                this.writeLog("You find the " + this._cell.toString() + "on cell: " + this._cell.getY() + "," + this._cell.getX() + " therefore you are dead " + "(step number: " + stepCounter + ")");
-                this._delegate.agentWasKilled(this);
+                this.writeLog("You find the " + Helper.getEntityNameFromClass(property.getClass().toString()) + " on cell: " + this._cell.getY() + "," + this._cell.getX() + " therefore you are dead " + "(step number: " + stepCounter + ")");
+                this._delegate.agentWasKilled(this._cell);
+                return;
+            }
+            if (ITarget.class.isAssignableFrom(property.getClass())) {
+                this.writeLog("You find the " + Helper.getEntityNameFromClass(property.getClass().toString()) + " on cell: " + this._cell.getY() + "," + this._cell.getX() + " therefore you are win " + "(step number: " + stepCounter + ")");
+                this._delegate.targetWasReached(this._cell);
                 return;
             }
         }
         // First Step: Take percept from current cell and Tell KBase about percept
         this.tellKBasePercept((BaseWorkSpaceCell)this._cell);
+        if (this._cell.getY() == 0 && this._cell.getX() == 3) {
+            int a = 1;
+        }
         if (this._actionManager.queueIsEmpty()) {
             // Generate all possible inferenc
             this._inferenceAlgorithm.execute(this._kBase);
@@ -152,9 +161,6 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
         AgentAction nextAction = this._actionManager.getNextAction(this._kBase);
         // Third Step: Make the current action
         this.makeAction(nextAction);
-
-        this.printCurrentState();
-
     }
     
     @Override
@@ -199,6 +205,9 @@ public class Agent extends AbstractAgent implements IKBaseSupervisorDelegate {
     @Override
     public void setCurrentCell(AbstractWorkSpaceCell cell) {
         this._cell = cell;
+        if (cell == null) {
+            int a = 0;
+        }
         ((SimpleActionManager)this._actionManager).setCurrentCell(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));
         ((SimpleActionManager)this._actionManager).setAgentMoveState(this._currentState);
         this._actionManager.addToVisitedCells(Helper.getStringFromRowAndCol(this._cell.getY(), this._cell.getX()));

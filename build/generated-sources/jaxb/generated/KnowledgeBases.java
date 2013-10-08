@@ -82,7 +82,6 @@ public class KnowledgeBases {
     }
     
     public void addSentence(String sentence) {
-        System.out.println(sentence);
         this.sentences.add(sentence);
     }
 

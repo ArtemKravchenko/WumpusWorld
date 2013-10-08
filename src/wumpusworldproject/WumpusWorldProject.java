@@ -7,6 +7,7 @@ package wumpusworldproject;
 import Logic.ActionManagment.IActionManager;
 import Logic.ActionManagment.SimpleActionManager;
 import Logic.WumpusWorldGame;
+import Models.Abstract.ITarget;
 import Models.Agent;
 import Models.BaseWorkSpace;
 import Models.BaseWorkSpaceCell;
@@ -22,10 +23,8 @@ import generated.KnowledgeBases;
 public class WumpusWorldProject {
 
     
-    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException {
         initGame();
-       
     }
     
     static void initGame() throws ClassNotFoundException, InstantiationException, IllegalAccessException{ 
@@ -48,7 +47,8 @@ public class WumpusWorldProject {
         
         workSpace.addPropertyToCell(2, 0, new Wumpus());
         workSpace.addPropertyToCell(0, 2, new Pit());
-        workSpace.addPropertyToCell(2, 2, new Gold());
+        workSpace.addPropertyToCell(2, 1, new Pit());
+        workSpace.addPropertyToCell(3, 3, new Gold());
         workSpace.printCurrentState();
         
         WumpusWorldGame game = new WumpusWorldGame(workSpace, agent);
